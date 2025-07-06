@@ -181,6 +181,8 @@ export const useClosetStore = create<ClosetState>()(
         }
         
         try {
+          console.log('Attempting auto-load from cloud for user:', userStore.userId);
+          
           const cloudData = await trpcClient.closet.get.query({
             userId: userStore.userId,
           });
@@ -191,20 +193,35 @@ export const useClosetStore = create<ClosetState>()(
             const localLastUpdate = currentState.lastSyncTime || 0;
             const hasLocalData = currentState.items.length > 0 || currentState.savedOutfits.length > 0;
             
-            // Auto-load scenarios:
-            // 1. No local data exists (fresh install or cleared data)
-            // 2. Cloud data is significantly newer (more than 1 minute)
-            // 3. User has Apple ID (more reliable identification)
-            const shouldAutoLoad = !hasLocalData || 
-                                   cloudData.lastUpdated > (localLastUpdate + 60000) ||
-                                   (userStore.appleUserId && cloudData.lastUpdated > localLastUpdate);
+            // For Apple ID users, always prioritize cloud data if it exists and is newer
+            // For device ID users, be more conservative
+            const isAppleIdUser = !!userStore.appleUserId;
+            
+            let shouldAutoLoad = false;
+            
+            if (isAppleIdUser) {
+              // Apple ID users: auto-load if cloud data is newer or if no local data
+              shouldAutoLoad = !hasLocalData || cloudData.lastUpdated > localLastUpdate;
+              console.log('Apple ID user - shouldAutoLoad:', shouldAutoLoad, {
+                hasLocalData,
+                cloudNewer: cloudData.lastUpdated > localLastUpdate,
+                cloudLastUpdate: new Date(cloudData.lastUpdated),
+                localLastUpdate: new Date(localLastUpdate)
+              });
+            } else {
+              // Device ID users: more conservative approach
+              shouldAutoLoad = !hasLocalData || cloudData.lastUpdated > (localLastUpdate + 60000);
+              console.log('Device ID user - shouldAutoLoad:', shouldAutoLoad, {
+                hasLocalData,
+                cloudSignificantlyNewer: cloudData.lastUpdated > (localLastUpdate + 60000)
+              });
+            }
             
             if (shouldAutoLoad) {
               console.log('Auto-loading data from cloud...', {
-                hasLocalData,
-                cloudLastUpdate: new Date(cloudData.lastUpdated),
-                localLastUpdate: new Date(localLastUpdate),
-                hasAppleId: !!userStore.appleUserId
+                itemsCount: cloudData.items?.length || 0,
+                outfitsCount: cloudData.savedOutfits?.length || 0,
+                historyCount: cloudData.outfitHistory?.length || 0
               });
               
               set({
@@ -215,8 +232,10 @@ export const useClosetStore = create<ClosetState>()(
               });
               userStore.setLastSyncTime(cloudData.lastUpdated);
             } else {
-              console.log('Skipping auto-load - local data is current');
+              console.log('Skipping auto-load - local data is current or preferred');
             }
+          } else {
+            console.log('No cloud data found for user');
           }
           
           userStore.setHasAutoLoaded(true);

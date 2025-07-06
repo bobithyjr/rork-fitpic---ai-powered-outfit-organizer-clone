@@ -58,38 +58,51 @@ export const useUserStore = create<UserState>()(
       initializeUser: async () => {
         const state = get();
         
-        // If already authenticated, no need to re-initialize
-        if (state.isAuthenticated && state.userId) {
-          return;
-        }
-        
-        // Try to use existing Apple authentication if available
-        if (state.appleUserId) {
-          set({ 
-            userId: state.appleUserId,
-            isAuthenticated: true 
-          });
-          return;
-        }
-        
-        // Check if Apple Sign-In is available
-        if (Platform.OS === 'ios') {
+        // If we have an Apple User ID stored, try to restore the session
+        if (state.appleUserId && Platform.OS === 'ios') {
           try {
-            const isAvailable = await AppleAuthentication.isAvailableAsync();
-            if (isAvailable) {
-              // Don't auto-sign in, let user choose
+            // Check if the user is still signed in with Apple
+            const credentialState = await AppleAuthentication.getCredentialStateAsync(state.appleUserId);
+            
+            if (credentialState === AppleAuthentication.AppleAuthenticationCredentialState.AUTHORIZED) {
+              // User is still authorized, restore their session
+              console.log('Restoring Apple ID session for user:', state.appleUserId);
+              set({ 
+                userId: state.appleUserId,
+                isAuthenticated: true,
+                hasAutoLoaded: false // Reset to allow auto-loading
+              });
+              return;
+            } else {
+              // User is no longer authorized, clear Apple ID data but keep fallback
+              console.log('Apple ID authorization expired, falling back to device ID');
+              const fallbackId = await generateFallbackUserId();
+              set({
+                userId: fallbackId,
+                appleUserId: null,
+                userEmail: null,
+                isAuthenticated: true,
+                hasAutoLoaded: false
+              });
               return;
             }
           } catch (error) {
-            console.log('Apple Sign-In not available:', error);
+            console.log('Error checking Apple ID credential state:', error);
+            // Fall through to fallback ID
           }
         }
         
-        // Fallback to device-based ID for web or when Apple Sign-In is not available
+        // If already authenticated with fallback ID, keep it
+        if (state.isAuthenticated && state.userId && !state.appleUserId) {
+          return;
+        }
+        
+        // Generate fallback ID for new users or when Apple ID is not available
         const fallbackId = await generateFallbackUserId();
         set({ 
           userId: fallbackId,
-          isAuthenticated: true 
+          isAuthenticated: true,
+          hasAutoLoaded: false
         });
       },
       
@@ -107,6 +120,8 @@ export const useUserStore = create<UserState>()(
           });
           
           const { user, email, fullName } = credential;
+          
+          console.log('Successfully signed in with Apple ID:', user);
           
           set({
             userId: user,

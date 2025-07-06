@@ -33,14 +33,22 @@ export default function RootLayout() {
       const userStore = useUserStore.getState();
       const closetStore = useClosetStore.getState();
       
-      // Initialize user ID
+      // Initialize user ID and restore Apple ID session if available
       await userStore.initializeUser();
       
       // Get updated state after initialization
       const updatedUserStore = useUserStore.getState();
       
+      console.log('App initialized with user:', {
+        userId: updatedUserStore.userId?.slice(-8),
+        isAppleId: !!updatedUserStore.appleUserId,
+        syncEnabled: updatedUserStore.isCloudSyncEnabled,
+        isAuthenticated: updatedUserStore.isAuthenticated
+      });
+      
       // Auto-load data from cloud if sync is enabled and user is authenticated
-      if (updatedUserStore.isCloudSyncEnabled && updatedUserStore.userId) {
+      if (updatedUserStore.isCloudSyncEnabled && updatedUserStore.userId && updatedUserStore.isAuthenticated) {
+        console.log('Triggering auto-load from cloud...');
         await closetStore.autoLoadFromCloud();
       }
     } catch (error) {
