@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Image } from "expo-image";
+import { View, Text, StyleSheet } from "react-native";
 import { isCloudImageUrl, getCloudImageData } from "@/utils/imageUpload";
+import Colors from "@/constants/colors";
 
 interface CloudImageProps {
   source: { uri: string };
@@ -24,10 +26,10 @@ export default function CloudImage({ source, style, contentFit = "cover", transi
           setImageUri(dataUri);
           setHasError(false);
         } catch (error) {
-          console.warn("Failed to load cloud image, using fallback:", error);
+          console.warn("Failed to load cloud image:", error);
           setHasError(true);
-          // Keep the original URI as fallback - this might be a local file URI
-          setImageUri(source.uri);
+          // Don't set the original URI as fallback for cloud images
+          // Instead, we'll show an error state
         } finally {
           setIsLoading(false);
         }
@@ -40,12 +42,56 @@ export default function CloudImage({ source, style, contentFit = "cover", transi
     loadCloudImage();
   }, [source.uri]);
 
+  if (hasError && isCloudImageUrl(source.uri)) {
+    return (
+      <View style={[style, styles.errorContainer]}>
+        <Text style={styles.errorText}>Image not available</Text>
+      </View>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <View style={[style, styles.loadingContainer]}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <Image
       source={{ uri: imageUri }}
       style={style}
       contentFit={contentFit}
       transition={transition}
+      onError={() => {
+        if (!isCloudImageUrl(source.uri)) {
+          setHasError(true);
+        }
+      }}
     />
   );
 }
+
+const styles = StyleSheet.create({
+  errorContainer: {
+    backgroundColor: Colors.lightGray,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: Colors.darkGray,
+    fontSize: 12,
+    textAlign: "center",
+  },
+  loadingContainer: {
+    backgroundColor: Colors.lightGray,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    color: Colors.darkGray,
+    fontSize: 12,
+    textAlign: "center",
+  },
+});

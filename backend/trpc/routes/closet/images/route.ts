@@ -10,7 +10,7 @@ export const uploadImageProcedure = publicProcedure
     imageData: z.string(), // base64 encoded image
     fileName: z.string(),
   }))
-  .mutation(async ({ input }) => {
+  .mutation(async ({ input }: { input: { userId: string; imageData: string; fileName: string } }) => {
     const { userId, imageData, fileName } = input;
     
     // Generate a unique image ID
@@ -33,7 +33,7 @@ export const getImageProcedure = publicProcedure
   .input(z.object({
     imageId: z.string(),
   }))
-  .query(async ({ input }) => {
+  .query(async ({ input }: { input: { imageId: string } }) => {
     const { imageId } = input;
     
     const imageData = imageStorage.get(imageId);
@@ -51,7 +51,7 @@ export const deleteImageProcedure = publicProcedure
   .input(z.object({
     imageId: z.string(),
   }))
-  .mutation(async ({ input }) => {
+  .mutation(async ({ input }: { input: { imageId: string } }) => {
     const { imageId } = input;
     
     imageStorage.delete(imageId);
