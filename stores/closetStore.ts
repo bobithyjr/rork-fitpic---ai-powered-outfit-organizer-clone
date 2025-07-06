@@ -91,7 +91,7 @@ export const useClosetStore = create<ClosetState>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           // Migrate old accessory categories to new single accessories category
-          state.items = state.items.map(item => {
+          state.items = state.items.map((item: ClothingItem) => {
             if (item.categoryId === 'accessory1' || item.categoryId === 'accessory2') {
               return { ...item, categoryId: 'accessories' };
             }
@@ -99,10 +99,10 @@ export const useClosetStore = create<ClosetState>()(
           });
           
           // Migrate outfit history
-          state.outfitHistory = state.outfitHistory.map(outfit => ({
+          state.outfitHistory = state.outfitHistory.map((outfit: Outfit) => ({
             ...outfit,
             items: Object.fromEntries(
-              Object.entries(outfit.items).map(([key, item]) => [
+              Object.entries(outfit.items).map(([key, item]: [string, ClothingItem | null]) => [
                 key,
                 item && (item.categoryId === 'accessory1' || item.categoryId === 'accessory2')
                   ? { ...item, categoryId: 'accessories' }
@@ -112,10 +112,10 @@ export const useClosetStore = create<ClosetState>()(
           }));
           
           // Migrate saved outfits
-          state.savedOutfits = state.savedOutfits.map(outfit => ({
+          state.savedOutfits = state.savedOutfits.map((outfit: Outfit) => ({
             ...outfit,
             items: Object.fromEntries(
-              Object.entries(outfit.items).map(([key, item]) => [
+              Object.entries(outfit.items).map(([key, item]: [string, ClothingItem | null]) => [
                 key,
                 item && (item.categoryId === 'accessory1' || item.categoryId === 'accessory2')
                   ? { ...item, categoryId: 'accessories' }
