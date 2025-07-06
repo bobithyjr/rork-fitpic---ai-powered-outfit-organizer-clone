@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "FitPic",
-    "slug": "fitpic-ai-powered-outfit-organizer-jpll77sq",
+    "slug": "fitpic-outfit-maker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.fitpic-ai-powered-outfit-organizer-jpll77sq"
+      "bundleIdentifier": "app.rork.fitpic-outfit-maker"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.fitpic-ai-powered-outfit-organizer-jpll77sq"
+      "package": "app.rork.fitpic-outfit-maker"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
