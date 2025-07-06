@@ -85,7 +85,7 @@ export async function generateAIOutfit(
     }));
 
     // Prepare the AI prompt
-    const prompt = `You are a professional fashion stylist. I need you to create a stylish, cohesive outfit from the following clothing items. Consider color coordination, style compatibility, seasonal appropriateness, and current fashion trends.
+    const prompt = `You are a world-class fashion stylist with expertise in color theory, style coordination, and current fashion trends. Your goal is to create visually stunning, well-coordinated outfits that are both stylish and practical.
 
 Available clothing items:
 ${JSON.stringify(itemDescriptions, null, 2)}
@@ -100,12 +100,34 @@ Available categories and their requirements:
 - accessories: OPTIONAL (add for personality and flair)
 
 Fashion guidelines to follow:
-1. Color coordination: Match or complement colors thoughtfully
-2. Style consistency: Ensure pieces work together (casual with casual, formal with formal, etc.)
-3. Visual balance: Consider proportions and silhouettes
-4. Intentional contrast: If mixing styles/colors, make it purposeful and fashionable
-5. Seasonal appropriateness: Consider layering and weather-appropriate choices
-6. Current trends: Incorporate modern fashion sensibilities
+1. COLOR HARMONY: Create pleasing color combinations using:
+   - Complementary colors (opposite on color wheel)
+   - Analogous colors (adjacent on color wheel)
+   - Monochromatic schemes (different shades of same color)
+   - Neutral bases with accent colors
+   - Classic combinations (navy/white, black/white, denim/white, etc.)
+
+2. STYLE CONSISTENCY: Ensure pieces work cohesively:
+   - Match formality levels (casual with casual, formal with formal)
+   - Consider silhouettes and proportions
+   - Balance fitted and loose pieces
+   - Maintain consistent aesthetic (minimalist, bohemian, classic, etc.)
+
+3. VISUAL APPEAL: Create outfits that are:
+   - Balanced and proportioned
+   - Interesting without being overwhelming
+   - Flattering and well-structured
+   - Instagram-worthy and photogenic
+
+4. INTENTIONAL CHOICES: Every piece should have a purpose:
+   - If mixing patterns, ensure they complement each other
+   - If using bold colors, balance with neutrals
+   - If adding accessories, ensure they enhance the overall look
+   - Consider texture mixing (smooth with textured, matte with shiny)
+
+5. CURRENT TRENDS: Incorporate modern fashion sensibilities while maintaining timeless appeal
+
+IMPORTANT: Put real thought into each selection. Avoid random combinations. Each outfit should tell a cohesive style story and be something someone would genuinely want to wear and feel confident in.
 
 Please select ONE item from each category (if available) to create the best possible outfit. Return your response as a JSON object with this exact structure:
 
@@ -119,7 +141,7 @@ Please select ONE item from each category (if available) to create the best poss
     "jackets": "item_id_or_null",
     "accessories": "item_id_or_null"
   },
-  "reasoning": "Brief explanation of why this combination works well together"
+  "reasoning": "Detailed explanation of the color coordination, style choices, and why this combination creates a cohesive, fashionable look"
 }
 
 Only include item IDs that exist in the provided list. Use null for categories where you choose not to include an item or where no items are available.`;
@@ -194,12 +216,18 @@ Only include item IDs that exist in the provided list. Use null for categories w
       }
     });
 
-    console.log('AI Outfit Reasoning:', aiOutfit.reasoning);
+    console.log('✨ AI Outfit Generated Successfully!');
+    console.log('🎨 AI Reasoning:', aiOutfit.reasoning);
+    console.log('👔 Selected Items:', Object.entries(finalOutfit)
+      .filter(([_, item]) => item !== null)
+      .map(([category, item]) => `${category}: ${item?.name}`)
+      .join(', '));
     
     return finalOutfit;
 
   } catch (error) {
-    console.error("Error generating AI outfit:", error);
+    console.error("❌ Error generating AI outfit:", error);
+    console.log("🔄 Falling back to random generation...");
     // Fall back to the original random generation
     return await generateOutfit(items, enabledCategories);
   }

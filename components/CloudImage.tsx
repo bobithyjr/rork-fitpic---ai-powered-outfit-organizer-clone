@@ -12,22 +12,28 @@ interface CloudImageProps {
 export default function CloudImage({ source, style, contentFit = "cover", transition }: CloudImageProps) {
   const [imageUri, setImageUri] = useState<string>(source.uri);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const loadCloudImage = async () => {
       if (isCloudImageUrl(source.uri)) {
         setIsLoading(true);
+        setHasError(false);
         try {
           const dataUri = await getCloudImageData(source.uri);
           setImageUri(dataUri);
+          setHasError(false);
         } catch (error) {
-          console.error("Failed to load cloud image:", error);
-          // Keep the original URI as fallback
+          console.warn("Failed to load cloud image, using fallback:", error);
+          setHasError(true);
+          // Keep the original URI as fallback - this might be a local file URI
+          setImageUri(source.uri);
         } finally {
           setIsLoading(false);
         }
       } else {
         setImageUri(source.uri);
+        setHasError(false);
       }
     };
 

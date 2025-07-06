@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure } from "../../../create-context";
+import { publicProcedure } from "../../create-context";
 
 // In-memory storage for demo (in production, use a real cloud storage service like AWS S3, Cloudinary, etc.)
 const imageStorage = new Map<string, string>();

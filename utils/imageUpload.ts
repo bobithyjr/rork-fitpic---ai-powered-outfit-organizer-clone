@@ -40,6 +40,7 @@ export async function getCloudImageData(cloudUrl: string): Promise<string> {
     return `data:image/jpeg;base64,${result.imageData}`;
   } catch (error) {
     console.error("Failed to get cloud image:", error);
-    throw error;
+    // Return a placeholder or the original URL as fallback
+    throw new Error(`Failed to load cloud image: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
