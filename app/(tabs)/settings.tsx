@@ -1,11 +1,16 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, Switch, ScrollView, Pressable } from "react-native";
+import { StyleSheet, View, Text, Switch, ScrollView, Pressable, Alert } from "react-native";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { useUserStore } from "@/stores/userStore";
+import { useClosetStore } from "@/stores/closetStore";
 import { CLOTHING_CATEGORIES } from "@/constants/categories";
 import Colors from "@/constants/colors";
+import { trpcClient } from "@/lib/trpc";
 
 export default function SettingsScreen() {
   const { enabledCategories, toggleCategory, resetToDefaults } = useSettingsStore();
+  const { isCloudSyncEnabled, toggleCloudSync, userId, lastSyncTime } = useUserStore();
+  const { syncToCloud, loadFromCloud, isLoading } = useClosetStore();
   const [selectedTab, setSelectedTab] = useState<"preferences" | "about" | "privacy">("preferences");
 
   // Filter out required categories that shouldn't be toggleable
@@ -13,8 +18,94 @@ export default function SettingsScreen() {
     category => !["all", "shirts", "pants", "shoes", "belts"].includes(category.id)
   );
 
+  const handleDeleteCloudData = async () => {
+    Alert.alert(
+      "Delete Cloud Data",
+      "This will permanently delete all your closet data from the cloud. Your local data will remain unchanged. This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (userId) {
+                await trpcClient.closet.deleteUserData.mutate({ userId });
+                Alert.alert("Success", "Your cloud data has been deleted.");
+              }
+            } catch (error) {
+              Alert.alert("Error", "Failed to delete cloud data. Please try again.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleManualSync = async () => {
+    try {
+      await syncToCloud();
+      Alert.alert("Success", "Your data has been synced to the cloud.");
+    } catch (error) {
+      Alert.alert("Error", "Failed to sync data. Please try again.");
+    }
+  };
+
   const renderPreferences = () => (
     <ScrollView style={styles.tabContent}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>CLOUD SYNC</Text>
+        <Text style={styles.sectionDescription}>
+          SYNC YOUR CLOSET DATA ACROSS DEVICES USING YOUR DEVICE ID
+        </Text>
+        
+        <View style={styles.settingRow}>
+          <View>
+            <Text style={styles.settingLabel}>Cloud Sync</Text>
+            <Text style={styles.optionalLabel}>
+              {isCloudSyncEnabled ? 'ENABLED' : 'DISABLED'}
+            </Text>
+          </View>
+          <Switch
+            value={isCloudSyncEnabled}
+            onValueChange={toggleCloudSync}
+            trackColor={{ false: Colors.mediumGray, true: Colors.primary }}
+          />
+        </View>
+        
+        {isCloudSyncEnabled && (
+          <>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Device ID:</Text>
+              <Text style={styles.infoValue}>{userId?.slice(-8) || 'Not set'}</Text>
+            </View>
+            
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Last Sync:</Text>
+              <Text style={styles.infoValue}>
+                {lastSyncTime ? new Date(lastSyncTime).toLocaleString() : 'Never'}
+              </Text>
+            </View>
+            
+            <View style={styles.buttonRow}>
+              <Pressable 
+                style={[styles.syncButton, isLoading && styles.disabledButton]} 
+                onPress={handleManualSync}
+                disabled={isLoading}
+              >
+                <Text style={styles.syncButtonText}>
+                  {isLoading ? 'SYNCING...' : 'SYNC NOW'}
+                </Text>
+              </Pressable>
+              
+              <Pressable style={styles.deleteCloudButton} onPress={handleDeleteCloudData}>
+                <Text style={styles.deleteCloudButtonText}>DELETE CLOUD DATA</Text>
+              </Pressable>
+            </View>
+          </>
+        )}
+      </View>
+      
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>OUTFIT PREFERENCES</Text>
         <Text style={styles.sectionDescription}>
@@ -53,7 +144,7 @@ export default function SettingsScreen() {
         <Text style={styles.aboutText}>
           FITPIC IS YOUR PERSONAL AI STYLIST THAT HELPS YOU CREATE OUTFITS FROM YOUR OWN WARDROBE.
           SIMPLY ADD YOUR CLOTHING ITEMS TO YOUR VIRTUAL CLOSET, AND LET FITPIC SUGGEST STYLISH COMBINATIONS.
-          ALL DATA IS STORED LOCALLY ON YOUR DEVICE - NO ACCOUNTS OR INTERNET REQUIRED.
+          YOUR DATA IS STORED LOCALLY AND OPTIONALLY SYNCED TO THE CLOUD USING YOUR DEVICE ID FOR SEAMLESS ACCESS ACROSS DEVICES.
         </Text>
         <Text style={styles.versionText}>VERSION 1.0.0</Text>
       </View>
@@ -67,14 +158,15 @@ export default function SettingsScreen() {
         
         <Text style={styles.privacySubtitle}>DATA COLLECTION</Text>
         <Text style={styles.privacyText}>
-          FITPIC COLLECTS AND STORES THE FOLLOWING INFORMATION LOCALLY ON YOUR DEVICE:
+          FITPIC COLLECTS AND STORES THE FOLLOWING INFORMATION:
           {"\n"}• CLOTHING ITEM IMAGES YOU UPLOAD OR CAPTURE
           {"\n"}• CLOTHING ITEM NAMES AND CATEGORIES YOU ASSIGN
           {"\n"}• YOUR OUTFIT PREFERENCES AND CATEGORY SETTINGS
           {"\n"}• SAVED FAVORITE OUTFIT COMBINATIONS
           {"\n"}• OUTFIT GENERATION HISTORY (UP TO 50 RECENT OUTFITS)
           {"\n"}• CUSTOM NAMES FOR YOUR FAVORITE OUTFITS
-          {"\n\n"}ALL DATA IS STORED EXCLUSIVELY ON YOUR DEVICE USING LOCAL STORAGE (ASYNCSTORAGE). NO INFORMATION IS TRANSMITTED TO EXTERNAL SERVERS OR THIRD PARTIES.
+          {"\n"}• A UNIQUE DEVICE IDENTIFIER FOR CLOUD SYNC
+          {"\n\n"}DATA IS STORED LOCALLY ON YOUR DEVICE AND OPTIONALLY SYNCED TO OUR SECURE CLOUD SERVERS WHEN CLOUD SYNC IS ENABLED.
         </Text>
 
         <Text style={styles.privacySubtitle}>DATA USAGE</Text>
@@ -86,11 +178,20 @@ export default function SettingsScreen() {
           {"\n"}• SAVE AND MANAGE YOUR FAVORITE OUTFIT COMBINATIONS
           {"\n"}• MAINTAIN A HISTORY OF GENERATED OUTFITS
           {"\n"}• ALLOW RENAMING AND ORGANIZING OF YOUR SAVED OUTFITS
+          {"\n"}• SYNC YOUR DATA ACROSS DEVICES WHEN CLOUD SYNC IS ENABLED
+          {"\n"}• RESTORE YOUR DATA IF YOU REINSTALL THE APP (WHEN CLOUD SYNC IS ENABLED)
         </Text>
 
-        <Text style={styles.privacySubtitle}>DATA SHARING</Text>
+        <Text style={styles.privacySubtitle}>CLOUD SYNC & DATA SHARING</Text>
         <Text style={styles.privacyText}>
-          FITPIC DOES NOT SHARE, SELL, OR TRANSMIT ANY OF YOUR PERSONAL DATA TO THIRD PARTIES. ALL PROCESSING OCCURS LOCALLY ON YOUR DEVICE.
+          WHEN CLOUD SYNC IS ENABLED:
+          {"\n"}• YOUR CLOSET DATA IS SECURELY TRANSMITTED TO AND STORED ON OUR SERVERS
+          {"\n"}• DATA IS ASSOCIATED WITH YOUR UNIQUE DEVICE IDENTIFIER
+          {"\n"}• YOUR DATA IS ENCRYPTED IN TRANSIT AND AT REST
+          {"\n"}• WE DO NOT SHARE, SELL, OR PROVIDE YOUR DATA TO THIRD PARTIES
+          {"\n"}• YOU CAN DISABLE CLOUD SYNC AT ANY TIME IN SETTINGS
+          {"\n"}• YOU CAN DELETE YOUR CLOUD DATA AT ANY TIME
+          {"\n\n"}WHEN CLOUD SYNC IS DISABLED, ALL DATA REMAINS EXCLUSIVELY ON YOUR DEVICE.
         </Text>
 
         <Text style={styles.privacySubtitle}>DEVICE PERMISSIONS</Text>
@@ -104,25 +205,32 @@ export default function SettingsScreen() {
 
         <Text style={styles.privacySubtitle}>DATA RETENTION</Text>
         <Text style={styles.privacyText}>
-          YOUR DATA REMAINS ON YOUR DEVICE UNTIL YOU CHOOSE TO:
+          LOCAL DATA REMAINS ON YOUR DEVICE UNTIL YOU:
           {"\n"}• DELETE INDIVIDUAL CLOTHING ITEMS FROM YOUR CLOSET
           {"\n"}• DELETE INDIVIDUAL FAVORITE OUTFITS
           {"\n"}• CLEAR YOUR OUTFIT HISTORY
           {"\n"}• RESET YOUR PREFERENCES TO DEFAULTS
-          {"\n"}• UNINSTALL THE APP (PERMANENTLY DELETES ALL DATA)
-          {"\n\n"}OUTFIT HISTORY IS AUTOMATICALLY LIMITED TO THE 50 MOST RECENT OUTFITS TO MANAGE STORAGE SPACE.
+          {"\n"}• UNINSTALL THE APP
+          {"\n\n"}CLOUD DATA (WHEN SYNC IS ENABLED):
+          {"\n"}• PERSISTS EVEN IF YOU UNINSTALL THE APP
+          {"\n"}• ALLOWS DATA RECOVERY WHEN YOU REINSTALL
+          {"\n"}• CAN BE MANUALLY DELETED FROM SETTINGS
+          {"\n"}• IS AUTOMATICALLY DELETED IF INACTIVE FOR 2 YEARS
+          {"\n\n"}OUTFIT HISTORY IS LIMITED TO 50 RECENT OUTFITS TO MANAGE STORAGE.
         </Text>
 
         <Text style={styles.privacySubtitle}>YOUR RIGHTS</Text>
         <Text style={styles.privacyText}>
           YOU HAVE COMPLETE CONTROL OVER YOUR DATA:
+          {"\n"}• ENABLE OR DISABLE CLOUD SYNC AT ANY TIME
+          {"\n"}• DELETE YOUR CLOUD DATA WHILE KEEPING LOCAL DATA
           {"\n"}• DELETE INDIVIDUAL CLOTHING ITEMS AT ANY TIME
           {"\n"}• DELETE INDIVIDUAL FAVORITE OUTFITS
           {"\n"}• RENAME YOUR FAVORITE OUTFITS
           {"\n"}• CLEAR YOUR ENTIRE OUTFIT HISTORY
           {"\n"}• TOGGLE CLOTHING CATEGORIES ON/OFF FOR OUTFIT GENERATION
           {"\n"}• RESET ALL PREFERENCES TO DEFAULTS
-          {"\n"}• UNINSTALL THE APP TO REMOVE ALL DATA PERMANENTLY
+          {"\n"}• REQUEST COMPLETE DATA DELETION BY CONTACTING US
         </Text>
 
         <Text style={styles.privacySubtitle}>CONTACT INFORMATION</Text>
@@ -135,7 +243,7 @@ export default function SettingsScreen() {
         <Text style={styles.privacySubtitle}>POLICY UPDATES</Text>
         <Text style={styles.privacyText}>
           THIS PRIVACY POLICY MAY BE UPDATED OCCASIONALLY TO REFLECT CHANGES IN APP FUNCTIONALITY OR LEGAL REQUIREMENTS. CONTINUED USE OF THE APP CONSTITUTES ACCEPTANCE OF ANY CHANGES.
-          {"\n\n"}LAST UPDATED: JULY 6, 2025
+          {"\n\n"}LAST UPDATED: JANUARY 15, 2025
         </Text>
       </View>
     </ScrollView>
@@ -285,5 +393,56 @@ const styles = StyleSheet.create({
     color: Colors.error,
     fontSize: 16,
     fontWeight: "500",
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.lightGray,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: Colors.darkGray,
+  },
+  infoValue: {
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: "500",
+  },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 16,
+  },
+  syncButton: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  syncButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  deleteCloudButton: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.error,
+  },
+  deleteCloudButtonText: {
+    color: Colors.error,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });

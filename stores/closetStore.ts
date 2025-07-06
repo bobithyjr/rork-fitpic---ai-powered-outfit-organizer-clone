@@ -2,11 +2,15 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ClothingItem, Outfit } from "@/types/clothing";
+import { trpcClient } from "@/lib/trpc";
+import { useUserStore } from "./userStore";
 
 interface ClosetState {
   items: ClothingItem[];
   savedOutfits: Outfit[];
   outfitHistory: Outfit[];
+  isLoading: boolean;
+  lastSyncTime: number | null;
   addItem: (item: Omit<ClothingItem, "id" | "createdAt">) => void;
   removeItem: (id: string) => void;
   getItemsByCategory: (categoryId: string) => ClothingItem[];
@@ -15,6 +19,9 @@ interface ClosetState {
   removeSavedOutfit: (id: string) => void;
   renameOutfit: (id: string, name: string) => void;
   clearHistory: () => void;
+  syncToCloud: () => Promise<void>;
+  loadFromCloud: () => Promise<void>;
+  setData: (data: { items: ClothingItem[]; savedOutfits: Outfit[]; outfitHistory: Outfit[] }) => void;
 }
 
 export const useClosetStore = create<ClosetState>()(
@@ -23,6 +30,8 @@ export const useClosetStore = create<ClosetState>()(
       items: [],
       savedOutfits: [],
       outfitHistory: [],
+      isLoading: false,
+      lastSyncTime: null,
       
       addItem: (item) => {
         const newItem: ClothingItem = {
@@ -33,12 +42,16 @@ export const useClosetStore = create<ClosetState>()(
         set((state) => ({
           items: [...state.items, newItem],
         }));
+        // Sync after adding item
+        setTimeout(() => get().syncToCloud(), 100);
       },
       
       removeItem: (id) => {
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         }));
+        // Sync after removing item
+        setTimeout(() => get().syncToCloud(), 100);
       },
       
       getItemsByCategory: (categoryId) => {
@@ -54,6 +67,8 @@ export const useClosetStore = create<ClosetState>()(
         set((state) => ({
           savedOutfits: [...state.savedOutfits, newOutfit],
         }));
+        // Sync after saving outfit
+        setTimeout(() => get().syncToCloud(), 100);
       },
       
       addToHistory: (outfit) => {
@@ -65,6 +80,8 @@ export const useClosetStore = create<ClosetState>()(
         set((state) => ({
           outfitHistory: [newOutfit, ...state.outfitHistory].slice(0, 50), // Keep last 50 outfits
         }));
+        // Sync after adding to history
+        setTimeout(() => get().syncToCloud(), 100);
       },
       
       removeSavedOutfit: (id) => {
@@ -78,6 +95,8 @@ export const useClosetStore = create<ClosetState>()(
             savedOutfits: filteredOutfits,
           };
         });
+        // Sync after removing outfit
+        setTimeout(() => get().syncToCloud(), 100);
       },
       
       renameOutfit: (id, name) => {
@@ -86,10 +105,80 @@ export const useClosetStore = create<ClosetState>()(
             outfit.id === id ? { ...outfit, name: name.trim() || undefined } : outfit
           ),
         }));
+        // Sync after renaming outfit
+        setTimeout(() => get().syncToCloud(), 100);
       },
       
       clearHistory: () => {
         set({ outfitHistory: [] });
+        // Sync after clearing history
+        get().syncToCloud();
+      },
+      
+      syncToCloud: async () => {
+        const userStore = useUserStore.getState();
+        if (!userStore.isCloudSyncEnabled || !userStore.userId) {
+          return;
+        }
+        
+        try {
+          set({ isLoading: true });
+          const state = get();
+          
+          await trpcClient.closet.sync.mutate({
+            userId: userStore.userId,
+            closetData: {
+              items: state.items,
+              savedOutfits: state.savedOutfits,
+              outfitHistory: state.outfitHistory,
+            },
+          });
+          
+          const now = Date.now();
+          set({ lastSyncTime: now });
+          userStore.setLastSyncTime(now);
+        } catch (error) {
+          console.error('Failed to sync to cloud:', error);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      
+      loadFromCloud: async () => {
+        const userStore = useUserStore.getState();
+        if (!userStore.isCloudSyncEnabled || !userStore.userId) {
+          return;
+        }
+        
+        try {
+          set({ isLoading: true });
+          
+          const cloudData = await trpcClient.closet.get.query({
+            userId: userStore.userId,
+          });
+          
+          if (cloudData.lastUpdated) {
+            set({
+              items: cloudData.items || [],
+              savedOutfits: cloudData.savedOutfits || [],
+              outfitHistory: cloudData.outfitHistory || [],
+              lastSyncTime: cloudData.lastUpdated,
+            });
+            userStore.setLastSyncTime(cloudData.lastUpdated);
+          }
+        } catch (error) {
+          console.error('Failed to load from cloud:', error);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      
+      setData: (data) => {
+        set({
+          items: data.items,
+          savedOutfits: data.savedOutfits,
+          outfitHistory: data.outfitHistory,
+        });
       },
     }),
     {

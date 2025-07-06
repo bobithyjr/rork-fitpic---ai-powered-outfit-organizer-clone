@@ -6,6 +6,8 @@ import { StatusBar } from "expo-status-bar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
 import Colors from "@/constants/colors";
+import { useUserStore } from "@/stores/userStore";
+import { useClosetStore } from "@/stores/closetStore";
 
 // Prevent the splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -21,8 +23,23 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
+      // Initialize user and load cloud data
+      initializeApp();
     }
   }, [fontsLoaded]);
+  
+  const initializeApp = async () => {
+    const userStore = useUserStore.getState();
+    const closetStore = useClosetStore.getState();
+    
+    // Initialize user ID
+    await userStore.initializeUser();
+    
+    // Load data from cloud if sync is enabled
+    if (userStore.isCloudSyncEnabled) {
+      await closetStore.loadFromCloud();
+    }
+  };
 
   if (!fontsLoaded) {
     return null;
