@@ -92,23 +92,27 @@ export const useClosetStore = create<ClosetState>()(
           // Migrate outfit history
           state.outfitHistory = state.outfitHistory.map(outfit => ({
             ...outfit,
-            items: outfit.items.map(item => {
-              if (item && (item.categoryId === 'accessory1' || item.categoryId === 'accessory2')) {
-                return { ...item, categoryId: 'accessories' };
-              }
-              return item;
-            })
+            items: Object.fromEntries(
+              Object.entries(outfit.items).map(([key, item]) => [
+                key,
+                item && (item.categoryId === 'accessory1' || item.categoryId === 'accessory2')
+                  ? { ...item, categoryId: 'accessories' }
+                  : item
+              ])
+            )
           }));
           
           // Migrate saved outfits
           state.savedOutfits = state.savedOutfits.map(outfit => ({
             ...outfit,
-            items: outfit.items.map(item => {
-              if (item && (item.categoryId === 'accessory1' || item.categoryId === 'accessory2')) {
-                return { ...item, categoryId: 'accessories' };
-              }
-              return item;
-            })
+            items: Object.fromEntries(
+              Object.entries(outfit.items).map(([key, item]) => [
+                key,
+                item && (item.categoryId === 'accessory1' || item.categoryId === 'accessory2')
+                  ? { ...item, categoryId: 'accessories' }
+                  : item
+              ])
+            )
           }));
         }
       },
