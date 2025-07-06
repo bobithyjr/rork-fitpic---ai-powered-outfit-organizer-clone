@@ -29,6 +29,7 @@ export default function AddItemScreen() {
   const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategory || "shirts");
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingName, setIsGeneratingName] = useState(false);
 
   // Filter out categories that shouldn't be selectable for adding items
   const selectableCategories = CLOTHING_CATEGORIES.filter(
@@ -77,23 +78,90 @@ export default function AddItemScreen() {
     }
   };
 
+  const generateImageDescription = async (imageUri: string): Promise<string> => {
+    try {
+      // Convert image to base64
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          // Remove the data:image/jpeg;base64, prefix
+          const base64Data = result.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.readAsDataURL(blob);
+      });
+
+      // Call AI API with image
+      const aiResponse = await fetch('https://toolkit.rork.com/text/llm/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert at identifying clothing items. Provide very short, basic descriptions of clothing items in images. Use 1-3 words maximum. Examples: "Blue Jeans", "Red Shirt", "Black Sneakers", "Leather Belt". Be concise and focus on the main item and its most obvious characteristic.'
+            },
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'What clothing item is this? Provide a very short description (1-3 words maximum).'
+                },
+                {
+                  type: 'image',
+                  image: base64
+                }
+              ]
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('AI API request failed');
+      }
+
+      const result = await aiResponse.json();
+      return result.completion.trim() || "Clothing Item";
+    } catch (error) {
+      console.error('Failed to generate image description:', error);
+      // Fallback to category-based name
+      return selectedCategory?.name.toLowerCase() || "item";
+    }
+  };
+
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
     setShowCategoryPicker(false);
   };
 
   const handleSave = async () => {
-    if (!name.trim() || !imageUri || !selectedCategoryId) {
-      Alert.alert("Missing Information", "Please provide a name and image for your item.");
+    if (!imageUri || !selectedCategoryId) {
+      Alert.alert("Missing Information", "Please provide an image for your item.");
       return;
     }
 
     setIsLoading(true);
     
     try {
+      let itemName = name.trim();
+      
+      // If no name provided, generate one using AI
+      if (!itemName) {
+        setIsGeneratingName(true);
+        itemName = await generateImageDescription(imageUri);
+        setIsGeneratingName(false);
+      }
+      
       // Add item to store with local image URI
       addItem({
-        name: name.trim(),
+        name: itemName,
         imageUri: imageUri,
         categoryId: selectedCategoryId,
       });
@@ -104,12 +172,15 @@ export default function AddItemScreen() {
       Alert.alert("Error", "Failed to save item. Please try again.");
     } finally {
       setIsLoading(false);
+      setIsGeneratingName(false);
     }
   };
 
   const handleCancel = () => {
     router.back();
   };
+
+  const canSave = imageUri && selectedCategoryId;
 
   return (
     <ScrollView style={styles.container}>
@@ -119,9 +190,12 @@ export default function AddItemScreen() {
           style={styles.input}
           value={name}
           onChangeText={setName}
-          placeholder={`ENTER ${selectedCategory?.name || "ITEM"} NAME`}
+          placeholder={`ENTER ${selectedCategory?.name || "ITEM"} NAME (OPTIONAL)`}
           placeholderTextColor={Colors.darkGray}
         />
+        <Text style={styles.helperText}>
+          Leave blank to let AI generate a name from the image
+        </Text>
 
         <Text style={styles.label}>CATEGORY</Text>
         <Pressable
@@ -167,12 +241,17 @@ export default function AddItemScreen() {
 
       <View style={styles.buttonContainer}>
         <Pressable
-          style={[styles.button, styles.saveButton]}
+          style={[styles.button, styles.saveButton, !canSave && styles.disabledButton]}
           onPress={handleSave}
-          disabled={isLoading || !name || !imageUri}
+          disabled={!canSave || isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator color="white" />
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="white" />
+              {isGeneratingName && (
+                <Text style={styles.loadingText}>GENERATING NAME...</Text>
+              )}
+            </View>
           ) : (
             <Text style={styles.saveButtonText}>SAVE ITEM</Text>
           )}
@@ -237,6 +316,12 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 8,
   },
+  helperText: {
+    fontSize: 12,
+    color: Colors.darkGray,
+    marginBottom: 16,
+    fontStyle: "italic",
+  },
   localInfo: {
     fontSize: 12,
     color: Colors.darkGray,
@@ -248,7 +333,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    marginBottom: 16,
+    marginBottom: 4,
     color: Colors.text,
   },
   categorySelector: {
@@ -329,6 +414,19 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  disabledButton: {
+    backgroundColor: Colors.darkGray,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  loadingText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "500",
   },
   cancelButton: {
     backgroundColor: Colors.background,
