@@ -88,7 +88,7 @@ export default function ClosetScreen() {
         data={selectedCategory === "all" ? filteredItems : [{ id: "add" }, ...filteredItems]}
         renderItem={renderItem}
         keyExtractor={(item) => (item.id === "add" ? "add" : item.id)}
-        numColumns={2}
+        numColumns={3}
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={styles.columnWrapper}
         ListEmptyComponent={
@@ -119,6 +119,7 @@ const styles = StyleSheet.create({
   columnWrapper: {
     justifyContent: "space-between",
     marginBottom: 16,
+    paddingHorizontal: 4,
   },
   emptyState: {
     padding: 24,

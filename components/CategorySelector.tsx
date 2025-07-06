@@ -44,14 +44,18 @@ export default function CategorySelector({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
+    paddingVertical: 16,
+    gap: 12,
+    backgroundColor: Colors.background,
   },
   categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
     backgroundColor: Colors.lightGray,
+    minWidth: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   selectedCategory: {
     backgroundColor: Colors.primary,
@@ -59,6 +63,8 @@ const styles = StyleSheet.create({
   categoryText: {
     color: Colors.text,
     fontWeight: "500",
+    fontSize: 14,
+    textAlign: 'center',
   },
   selectedCategoryText: {
     color: "white",
