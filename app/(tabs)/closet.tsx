@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet, View, Text, FlatList, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { Plus } from "lucide-react-native";
+import { Plus, Upload } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
 import CategorySelector from "@/components/CategorySelector";
@@ -38,6 +38,10 @@ export default function ClosetScreen() {
       pathname: "/closet/add",
       params: { category: targetCategory },
     });
+  };
+
+  const handleBatchUpload = () => {
+    router.push("/closet/batch-upload");
   };
 
   const handleCategorySelect = (categoryId: string) => {
@@ -86,9 +90,15 @@ export default function ClosetScreen() {
       <Text style={styles.emptyStateText}>
         {selectedCategory === "all" ? "NO ITEMS IN YOUR CLOSET YET." : "NO ITEMS IN THIS CATEGORY YET."}
       </Text>
-      <Pressable style={styles.emptyAddButton} onPress={handleAddItem}>
-        <Text style={styles.emptyAddButtonText}>ADD ITEM</Text>
-      </Pressable>
+      <View style={styles.emptyActions}>
+        <Pressable style={styles.emptyAddButton} onPress={handleAddItem}>
+          <Text style={styles.emptyAddButtonText}>ADD ITEM</Text>
+        </Pressable>
+        <Pressable style={styles.emptyBatchButton} onPress={handleBatchUpload}>
+          <Upload size={16} color={Colors.primary} />
+          <Text style={styles.emptyBatchButtonText}>BATCH UPLOAD</Text>
+        </Pressable>
+      </View>
     </View>
   );
 
@@ -124,9 +134,14 @@ export default function ClosetScreen() {
         )}
       </View>
 
-      <Pressable style={styles.fab} onPress={handleAddItem}>
-        <Plus size={24} color="white" />
-      </Pressable>
+      <View style={styles.fabContainer}>
+        <Pressable style={styles.batchFab} onPress={handleBatchUpload}>
+          <Upload size={20} color="white" />
+        </Pressable>
+        <Pressable style={styles.fab} onPress={handleAddItem}>
+          <Plus size={24} color="white" />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -170,6 +185,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 16,
   },
+  emptyActions: {
+    gap: 12,
+    alignItems: "center",
+  },
   emptyAddButton: {
     backgroundColor: Colors.primary,
     paddingHorizontal: 24,
@@ -181,10 +200,42 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16,
   },
-  fab: {
+  emptyBatchButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: Colors.background,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  emptyBatchButtonText: {
+    color: Colors.primary,
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  fabContainer: {
     position: "absolute",
     bottom: 24,
     right: 24,
+    gap: 12,
+  },
+  batchFab: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.secondary,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  fab: {
     width: 56,
     height: 56,
     borderRadius: 28,
