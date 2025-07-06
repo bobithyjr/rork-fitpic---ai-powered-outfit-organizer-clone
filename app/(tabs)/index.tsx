@@ -54,9 +54,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>FITPIC</Text>
-      </View>
+
 
       <View style={styles.outfitContainer}>
         {!hasItems ? (
@@ -111,16 +109,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
-    padding: 24,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: Colors.text,
-    letterSpacing: 1,
-  },
+
   outfitContainer: {
     flex: 1,
     justifyContent: "center",
