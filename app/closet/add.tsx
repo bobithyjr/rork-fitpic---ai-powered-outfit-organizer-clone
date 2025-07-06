@@ -17,15 +17,12 @@ import { Image } from "expo-image";
 import { Camera, X, ChevronDown } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
-import { useUserStore } from "@/stores/userStore";
 import { CLOTHING_CATEGORIES } from "@/constants/categories";
-import { uploadImageToCloud } from "@/utils/imageUpload";
 
 export default function AddItemScreen() {
   const router = useRouter();
   const { category: initialCategory } = useLocalSearchParams<{ category: string }>();
   const { addItem } = useClosetStore();
-  const { userId, isCloudSyncEnabled } = useUserStore();
 
   const [name, setName] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -94,24 +91,10 @@ export default function AddItemScreen() {
     setIsLoading(true);
     
     try {
-      let finalImageUri = imageUri;
-      
-      // If cloud sync is enabled and we have a user ID, upload image to cloud
-      if (isCloudSyncEnabled && userId) {
-        try {
-          console.log("Uploading image to cloud storage...");
-          finalImageUri = await uploadImageToCloud(imageUri, userId);
-          console.log("Image uploaded successfully:", finalImageUri);
-        } catch (error) {
-          console.error("Failed to upload image to cloud, using local URI:", error);
-          // Continue with local URI if cloud upload fails
-        }
-      }
-      
-      // Add item to store
+      // Add item to store with local image URI
       addItem({
         name: name.trim(),
-        imageUri: finalImageUri,
+        imageUri: imageUri,
         categoryId: selectedCategoryId,
       });
       
@@ -152,11 +135,9 @@ export default function AddItemScreen() {
         </Pressable>
 
         <Text style={styles.label}>IMAGE</Text>
-        {isCloudSyncEnabled && userId && (
-          <Text style={styles.cloudInfo}>
-            Images will be saved to your cloud storage for access across devices.
-          </Text>
-        )}
+        <Text style={styles.localInfo}>
+          Images are stored locally on your device. Only your preferences and outfit data are synced to the cloud.
+        </Text>
         {imageUri ? (
           <View style={styles.imagePreviewContainer}>
             <Image
@@ -256,7 +237,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: 8,
   },
-  cloudInfo: {
+  localInfo: {
     fontSize: 12,
     color: Colors.darkGray,
     marginBottom: 8,
