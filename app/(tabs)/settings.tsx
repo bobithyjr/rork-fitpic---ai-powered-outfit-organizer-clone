@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, Switch, ScrollView, Pressable, Alert } from "react-native";
+import { StyleSheet, View, Text, Switch, ScrollView, Pressable, Alert, Platform } from "react-native";
+import * as AppleAuthentication from "expo-apple-authentication";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useUserStore } from "@/stores/userStore";
 import { useClosetStore } from "@/stores/closetStore";
@@ -9,7 +10,17 @@ import { trpcClient } from "@/lib/trpc";
 
 export default function SettingsScreen() {
   const { enabledCategories, toggleCategory, resetToDefaults } = useSettingsStore();
-  const { isCloudSyncEnabled, toggleCloudSync, userId, lastSyncTime } = useUserStore();
+  const { 
+    isCloudSyncEnabled, 
+    toggleCloudSync, 
+    userId, 
+    userEmail,
+    appleUserId,
+    isAuthenticated,
+    lastSyncTime,
+    signInWithApple,
+    signOut
+  } = useUserStore();
   const { syncToCloud, loadFromCloud, isLoading } = useClosetStore();
   const [selectedTab, setSelectedTab] = useState<"preferences" | "about" | "privacy">("preferences");
 
@@ -51,12 +62,41 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleAppleSignIn = async () => {
+    try {
+      await signInWithApple();
+      Alert.alert("Success", "You have been signed in with Apple ID. Your data will now be synced using your Apple ID.");
+    } catch (error: any) {
+      if (error.code !== 'ERR_CANCELED') {
+        Alert.alert("Error", "Failed to sign in with Apple. Please try again.");
+      }
+    }
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "This will sign you out and stop syncing your data with your Apple ID. Your local data will remain unchanged.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: () => {
+            signOut();
+            Alert.alert("Success", "You have been signed out.");
+          },
+        },
+      ]
+    );
+  };
+
   const renderPreferences = () => (
     <ScrollView style={styles.tabContent}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>CLOUD SYNC</Text>
         <Text style={styles.sectionDescription}>
-          SYNC YOUR CLOSET DATA ACROSS DEVICES USING YOUR DEVICE ID
+          SYNC YOUR CLOSET DATA ACROSS DEVICES USING YOUR APPLE ID OR DEVICE ID
         </Text>
         
         <View style={styles.settingRow}>
@@ -75,8 +115,39 @@ export default function SettingsScreen() {
         
         {isCloudSyncEnabled && (
           <>
+            {Platform.OS === 'ios' && !appleUserId && (
+              <View style={styles.appleSignInContainer}>
+                <Text style={styles.appleSignInDescription}>
+                  Sign in with Apple ID for secure cloud sync that persists even if you uninstall the app.
+                </Text>
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={8}
+                  style={styles.appleSignInButton}
+                  onPress={handleAppleSignIn}
+                />
+              </View>
+            )}
+            
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Device ID:</Text>
+              <Text style={styles.infoLabel}>Account Type:</Text>
+              <Text style={styles.infoValue}>
+                {appleUserId ? 'Apple ID' : 'Device ID'}
+              </Text>
+            </View>
+            
+            {appleUserId && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Apple ID:</Text>
+                <Text style={styles.infoValue}>
+                  {userEmail || 'Private Email'}
+                </Text>
+              </View>
+            )}
+            
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>User ID:</Text>
               <Text style={styles.infoValue}>{userId?.slice(-8) || 'Not set'}</Text>
             </View>
             
@@ -102,6 +173,14 @@ export default function SettingsScreen() {
                 <Text style={styles.deleteCloudButtonText}>DELETE CLOUD DATA</Text>
               </Pressable>
             </View>
+            
+            {appleUserId && (
+              <View style={styles.signOutContainer}>
+                <Pressable style={styles.signOutButton} onPress={handleSignOut}>
+                  <Text style={styles.signOutButtonText}>SIGN OUT OF APPLE ID</Text>
+                </Pressable>
+              </View>
+            )}
           </>
         )}
       </View>
@@ -144,7 +223,7 @@ export default function SettingsScreen() {
         <Text style={styles.aboutText}>
           FITPIC IS YOUR PERSONAL AI STYLIST THAT HELPS YOU CREATE OUTFITS FROM YOUR OWN WARDROBE.
           SIMPLY ADD YOUR CLOTHING ITEMS TO YOUR VIRTUAL CLOSET, AND LET FITPIC SUGGEST STYLISH COMBINATIONS.
-          YOUR DATA IS STORED LOCALLY AND OPTIONALLY SYNCED TO THE CLOUD USING YOUR DEVICE ID FOR SEAMLESS ACCESS ACROSS DEVICES.
+          YOUR DATA IS STORED LOCALLY AND OPTIONALLY SYNCED TO THE CLOUD USING YOUR APPLE ID OR DEVICE ID FOR SEAMLESS ACCESS ACROSS DEVICES.
         </Text>
         <Text style={styles.versionText}>VERSION 1.0.0</Text>
       </View>
@@ -165,7 +244,9 @@ export default function SettingsScreen() {
           {"\n"}• SAVED FAVORITE OUTFIT COMBINATIONS
           {"\n"}• OUTFIT GENERATION HISTORY (UP TO 50 RECENT OUTFITS)
           {"\n"}• CUSTOM NAMES FOR YOUR FAVORITE OUTFITS
-          {"\n"}• A UNIQUE DEVICE IDENTIFIER FOR CLOUD SYNC
+          {"\n"}• YOUR APPLE ID (WHEN YOU SIGN IN WITH APPLE)
+          {"\n"}• YOUR EMAIL ADDRESS (WHEN PROVIDED BY APPLE SIGN-IN)
+          {"\n"}• A UNIQUE DEVICE IDENTIFIER FOR CLOUD SYNC (WHEN NOT USING APPLE ID)
           {"\n\n"}DATA IS STORED LOCALLY ON YOUR DEVICE AND OPTIONALLY SYNCED TO OUR SECURE CLOUD SERVERS WHEN CLOUD SYNC IS ENABLED.
         </Text>
 
@@ -186,11 +267,13 @@ export default function SettingsScreen() {
         <Text style={styles.privacyText}>
           WHEN CLOUD SYNC IS ENABLED:
           {"\n"}• YOUR CLOSET DATA IS SECURELY TRANSMITTED TO AND STORED ON OUR SERVERS
-          {"\n"}• DATA IS ASSOCIATED WITH YOUR UNIQUE DEVICE IDENTIFIER
+          {"\n"}• DATA IS ASSOCIATED WITH YOUR APPLE ID (PREFERRED) OR DEVICE IDENTIFIER
+          {"\n"}• APPLE ID AUTHENTICATION ALLOWS DATA RECOVERY EVEN AFTER APP REINSTALLATION
           {"\n"}• YOUR DATA IS ENCRYPTED IN TRANSIT AND AT REST
           {"\n"}• WE DO NOT SHARE, SELL, OR PROVIDE YOUR DATA TO THIRD PARTIES
           {"\n"}• YOU CAN DISABLE CLOUD SYNC AT ANY TIME IN SETTINGS
           {"\n"}• YOU CAN DELETE YOUR CLOUD DATA AT ANY TIME
+          {"\n"}• YOU CAN SIGN OUT OF APPLE ID TO STOP APPLE ID-BASED SYNC
           {"\n\n"}WHEN CLOUD SYNC IS DISABLED, ALL DATA REMAINS EXCLUSIVELY ON YOUR DEVICE.
         </Text>
 
@@ -212,10 +295,11 @@ export default function SettingsScreen() {
           {"\n"}• RESET YOUR PREFERENCES TO DEFAULTS
           {"\n"}• UNINSTALL THE APP
           {"\n\n"}CLOUD DATA (WHEN SYNC IS ENABLED):
-          {"\n"}• PERSISTS EVEN IF YOU UNINSTALL THE APP
-          {"\n"}• ALLOWS DATA RECOVERY WHEN YOU REINSTALL
+          {"\n"}• PERSISTS EVEN IF YOU UNINSTALL THE APP (ESPECIALLY WITH APPLE ID)
+          {"\n"}• ALLOWS DATA RECOVERY WHEN YOU REINSTALL AND SIGN IN AGAIN
           {"\n"}• CAN BE MANUALLY DELETED FROM SETTINGS
           {"\n"}• IS AUTOMATICALLY DELETED IF INACTIVE FOR 2 YEARS
+          {"\n"}• APPLE ID-BASED DATA IS MORE PERSISTENT THAN DEVICE ID-BASED DATA
           {"\n\n"}OUTFIT HISTORY IS LIMITED TO 50 RECENT OUTFITS TO MANAGE STORAGE.
         </Text>
 

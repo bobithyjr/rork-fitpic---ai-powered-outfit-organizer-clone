@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure } from "../../../create-context";
+import { publicProcedure } from "../../create-context";
 
 // Define the schema for clothing items and outfits
 const ClothingItemSchema = z.object({
@@ -31,7 +31,7 @@ export const syncClosetProcedure = publicProcedure
     userId: z.string(),
     closetData: ClosetDataSchema,
   }))
-  .mutation(async ({ input }) => {
+  .mutation(async ({ input }: { input: { userId: string; closetData: z.infer<typeof ClosetDataSchema> } }) => {
     const { userId, closetData } = input;
     
     // Store the closet data for this user
@@ -51,7 +51,7 @@ export const getClosetProcedure = publicProcedure
   .input(z.object({
     userId: z.string(),
   }))
-  .query(async ({ input }) => {
+  .query(async ({ input }: { input: { userId: string } }) => {
     const { userId } = input;
     
     const closetData = userClosets.get(userId);
@@ -72,7 +72,7 @@ export const deleteUserDataProcedure = publicProcedure
   .input(z.object({
     userId: z.string(),
   }))
-  .mutation(async ({ input }) => {
+  .mutation(async ({ input }: { input: { userId: string } }) => {
     const { userId } = input;
     
     userClosets.delete(userId);
