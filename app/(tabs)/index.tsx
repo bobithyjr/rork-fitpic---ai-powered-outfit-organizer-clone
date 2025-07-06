@@ -55,7 +55,7 @@ export default function HomeScreen() {
 
   const handleItemPress = (categoryId: string) => {
     // Map accessories to the accessories category for closet navigation
-    const targetCategory = categoryId === "accessory1" || categoryId === "accessory2" 
+    const targetCategory = categoryId === "accessories" 
       ? "accessories" 
       : categoryId;
     router.push(`/closet/category/${targetCategory}`);

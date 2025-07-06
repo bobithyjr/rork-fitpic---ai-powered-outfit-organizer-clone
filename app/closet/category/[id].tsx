@@ -17,7 +17,7 @@ export default function CategoryScreen() {
   const getCategoryItems = () => {
     if (id === "accessories") {
       return items.filter((item) => 
-        item.categoryId === "accessory1" || item.categoryId === "accessory2"
+        item.categoryId === "accessories"
       );
     }
     return items.filter((item) => item.categoryId === id);
@@ -28,7 +28,7 @@ export default function CategoryScreen() {
   const handleAddItem = () => {
     let targetCategory = id;
     if (id === "accessories") {
-      targetCategory = "accessory1";
+      targetCategory = "accessories";
     }
     
     router.push({

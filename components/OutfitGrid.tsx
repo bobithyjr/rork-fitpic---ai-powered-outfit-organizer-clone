@@ -19,8 +19,8 @@ export default function OutfitGrid({
   // Create a symmetric grid layout matching the image
   // Position mapping:
   // 0: empty, 1: hat, 2: empty
-  // 3: accessory1, 4: shirt, 5: jacket
-  // 6: accessory2, 7: pants, 8: belt
+  // 3: accessories, 4: shirt, 5: jacket
+  // 6: empty, 7: pants, 8: belt
   // 9: empty, 10: shoes, 11: empty
   const grid = Array(12).fill(null);
 

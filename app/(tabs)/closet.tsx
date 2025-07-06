@@ -19,7 +19,7 @@ export default function ClosetScreen() {
       return items;
     } else if (selectedCategory === "accessories") {
       return items.filter((item) => 
-        item.categoryId === "accessory1" || item.categoryId === "accessory2"
+        item.categoryId === "accessories"
       );
     } else {
       return items.filter((item) => item.categoryId === selectedCategory);
@@ -31,7 +31,7 @@ export default function ClosetScreen() {
   const handleAddItem = () => {
     let targetCategory = selectedCategory === "all" ? "shirts" : selectedCategory;
     if (selectedCategory === "accessories") {
-      targetCategory = "accessory1";
+      targetCategory = "accessories";
     }
     
     router.push({

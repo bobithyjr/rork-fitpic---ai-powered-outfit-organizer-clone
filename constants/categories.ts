@@ -11,10 +11,9 @@ export const CLOTHING_CATEGORIES: ClothingCategory[] = [
   { id: "hats", name: "HATS", position: 1, optional: true },
   { id: "shirts", name: "SHIRTS", position: 4, optional: false },
   { id: "jackets", name: "COATS", position: 5, optional: true },
-  { id: "accessory1", name: "ACCESSORY 1", position: 3, optional: true, closetGroup: "accessories" },
+  { id: "accessories", name: "ACCESSORIES", position: 3, optional: true, closetGroup: "accessories" },
   { id: "pants", name: "PANTS", position: 7, optional: false },
   { id: "belts", name: "BELTS", position: 8, optional: false },
-  { id: "accessory2", name: "ACCESSORY 2", position: 6, optional: true, closetGroup: "accessories" },
   { id: "shoes", name: "SHOES", position: 10, optional: false },
 ];
 

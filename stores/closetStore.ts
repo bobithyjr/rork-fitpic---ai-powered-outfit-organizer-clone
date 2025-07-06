@@ -79,6 +79,39 @@ export const useClosetStore = create<ClosetState>()(
     {
       name: "closet-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Migrate old accessory categories to new single accessories category
+          state.items = state.items.map(item => {
+            if (item.categoryId === 'accessory1' || item.categoryId === 'accessory2') {
+              return { ...item, categoryId: 'accessories' };
+            }
+            return item;
+          });
+          
+          // Migrate outfit history
+          state.outfitHistory = state.outfitHistory.map(outfit => ({
+            ...outfit,
+            items: outfit.items.map(item => {
+              if (item && (item.categoryId === 'accessory1' || item.categoryId === 'accessory2')) {
+                return { ...item, categoryId: 'accessories' };
+              }
+              return item;
+            })
+          }));
+          
+          // Migrate saved outfits
+          state.savedOutfits = state.savedOutfits.map(outfit => ({
+            ...outfit,
+            items: outfit.items.map(item => {
+              if (item && (item.categoryId === 'accessory1' || item.categoryId === 'accessory2')) {
+                return { ...item, categoryId: 'accessories' };
+              }
+              return item;
+            })
+          }));
+        }
+      },
     }
   )
 );
