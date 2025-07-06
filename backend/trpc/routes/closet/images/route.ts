@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure } from "../../create-context";
+import { publicProcedure } from "../../../create-context";
 
 // In-memory storage for demo (in production, use a real cloud storage service like AWS S3, Cloudinary, etc.)
 const imageStorage = new Map<string, string>();
@@ -10,7 +10,7 @@ export const uploadImageProcedure = publicProcedure
     imageData: z.string(), // base64 encoded image
     fileName: z.string(),
   }))
-  .mutation(async ({ input }: { input: { userId: string; imageData: string; fileName: string } }) => {
+  .mutation(async ({ input }) => {
     const { userId, imageData, fileName } = input;
     
     // Generate a unique image ID
@@ -33,7 +33,7 @@ export const getImageProcedure = publicProcedure
   .input(z.object({
     imageId: z.string(),
   }))
-  .query(async ({ input }: { input: { imageId: string } }) => {
+  .query(async ({ input }) => {
     const { imageId } = input;
     
     const imageData = imageStorage.get(imageId);
@@ -51,7 +51,7 @@ export const deleteImageProcedure = publicProcedure
   .input(z.object({
     imageId: z.string(),
   }))
-  .mutation(async ({ input }: { input: { imageId: string } }) => {
+  .mutation(async ({ input }) => {
     const { imageId } = input;
     
     imageStorage.delete(imageId);
