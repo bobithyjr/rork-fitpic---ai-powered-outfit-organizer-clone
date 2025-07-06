@@ -156,7 +156,7 @@ export default function FavoriteOutfitsScreen() {
                 console.log('Delete button pressed for item:', item.id);
                 handleRemoveOutfit(item.id);
               }}
-              style={[styles.actionButton, styles.deleteButton]}
+              style={styles.actionButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Trash2 size={18} color={Colors.error} />
@@ -258,10 +258,6 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     padding: 16,
-  },
-  deleteButton: {
-    backgroundColor: 'rgba(220, 53, 69, 0.1)',
-    borderRadius: 8,
   },
   emptyState: {
     padding: 24,
