@@ -409,7 +409,7 @@ export default function SettingsScreen() {
         <Text style={styles.privacySubtitle}>POLICY UPDATES</Text>
         <Text style={styles.privacyText}>
           THIS PRIVACY POLICY MAY BE UPDATED OCCASIONALLY TO REFLECT CHANGES IN APP FUNCTIONALITY OR LEGAL REQUIREMENTS. CONTINUED USE OF THE APP CONSTITUTES ACCEPTANCE OF ANY CHANGES.
-          {"\n\n"}LAST UPDATED: JANUARY 15, 2025
+          {"\n\n"}LAST UPDATED: JULY 6, 2025
         </Text>
       </View>
     </ScrollView>
