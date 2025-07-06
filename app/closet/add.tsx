@@ -8,25 +8,33 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
+  Modal,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
-import { Camera, X } from "lucide-react-native";
+import { Camera, X, ChevronDown } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
 import { CLOTHING_CATEGORIES } from "@/constants/categories";
 
 export default function AddItemScreen() {
   const router = useRouter();
-  const { category } = useLocalSearchParams<{ category: string }>();
+  const { category: initialCategory } = useLocalSearchParams<{ category: string }>();
   const { addItem } = useClosetStore();
 
   const [name, setName] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategory || "shirts");
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const selectedCategory = CLOTHING_CATEGORIES.find((c) => c.id === category);
+  // Filter out categories that shouldn't be selectable for adding items
+  const selectableCategories = CLOTHING_CATEGORIES.filter(
+    (c) => !["all"].includes(c.id)
+  );
+
+  const selectedCategory = CLOTHING_CATEGORIES.find((c) => c.id === selectedCategoryId);
 
   const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -68,8 +76,13 @@ export default function AddItemScreen() {
     }
   };
 
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategoryId(categoryId);
+    setShowCategoryPicker(false);
+  };
+
   const handleSave = () => {
-    if (!name.trim() || !imageUri || !category) {
+    if (!name.trim() || !imageUri || !selectedCategoryId) {
       alert("Please provide a name and image for your item");
       return;
     }
@@ -81,7 +94,7 @@ export default function AddItemScreen() {
       addItem({
         name: name.trim(),
         imageUri,
-        categoryId: category,
+        categoryId: selectedCategoryId,
       });
       
       setIsLoading(false);
@@ -106,11 +119,15 @@ export default function AddItemScreen() {
         />
 
         <Text style={styles.label}>CATEGORY</Text>
-        <View style={styles.categoryContainer}>
+        <Pressable
+          style={styles.categorySelector}
+          onPress={() => setShowCategoryPicker(true)}
+        >
           <Text style={styles.categoryText}>
-            {selectedCategory?.name || "UNKNOWN"}
+            {selectedCategory?.name || "SELECT CATEGORY"}
           </Text>
-        </View>
+          <ChevronDown size={20} color={Colors.darkGray} />
+        </Pressable>
 
         <Text style={styles.label}>IMAGE</Text>
         {imageUri ? (
@@ -156,6 +173,44 @@ export default function AddItemScreen() {
           <Text style={styles.cancelButtonText}>CANCEL</Text>
         </Pressable>
       </View>
+
+      {/* Category Picker Modal */}
+      <Modal
+        visible={showCategoryPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCategoryPicker(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowCategoryPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>SELECT CATEGORY</Text>
+            <ScrollView style={styles.categoryList}>
+              {selectableCategories.map((category) => (
+                <Pressable
+                  key={category.id}
+                  style={[
+                    styles.categoryOption,
+                    selectedCategoryId === category.id && styles.selectedCategoryOption,
+                  ]}
+                  onPress={() => handleCategorySelect(category.id)}
+                >
+                  <Text
+                    style={[
+                      styles.categoryOptionText,
+                      selectedCategoryId === category.id && styles.selectedCategoryOptionText,
+                    ]}
+                  >
+                    {category.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -182,11 +237,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: Colors.text,
   },
-  categoryContainer: {
+  categorySelector: {
     backgroundColor: Colors.lightGray,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   categoryText: {
     fontSize: 16,
@@ -267,5 +325,45 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontSize: 16,
     fontWeight: "500",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    padding: 20,
+    width: "80%",
+    maxHeight: "70%",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.text,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  categoryList: {
+    maxHeight: 300,
+  },
+  categoryOption: {
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: Colors.lightGray,
+  },
+  selectedCategoryOption: {
+    backgroundColor: Colors.primary,
+  },
+  categoryOptionText: {
+    fontSize: 16,
+    color: Colors.text,
+    textAlign: "center",
+  },
+  selectedCategoryOptionText: {
+    color: "white",
   },
 });
