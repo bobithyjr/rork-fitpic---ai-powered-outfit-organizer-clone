@@ -68,9 +68,16 @@ export const useClosetStore = create<ClosetState>()(
       },
       
       removeSavedOutfit: (id) => {
-        set((state) => ({
-          savedOutfits: state.savedOutfits.filter((outfit) => outfit.id !== id),
-        }));
+        console.log('removeSavedOutfit called with ID:', id);
+        set((state) => {
+          console.log('Before filter - savedOutfits count:', state.savedOutfits.length);
+          const filteredOutfits = state.savedOutfits.filter((outfit) => outfit.id !== id);
+          console.log('After filter - savedOutfits count:', filteredOutfits.length);
+          return {
+            ...state,
+            savedOutfits: filteredOutfits,
+          };
+        });
       },
       
       renameOutfit: (id, name) => {

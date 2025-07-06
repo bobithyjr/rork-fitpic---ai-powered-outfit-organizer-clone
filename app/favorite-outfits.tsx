@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, FlatList, Pressable, TextInput, Alert } from "react-native";
+import { StyleSheet, View, Text, FlatList, Pressable, TextInput, Alert, Platform } from "react-native";
 import { Stack } from "expo-router";
 import { Trash2, Edit3, Check, X } from "lucide-react-native";
 import Colors from "@/constants/colors";
@@ -8,11 +8,15 @@ import { Outfit } from "@/types/clothing";
 import OutfitModal from "./outfit-modal";
 
 export default function FavoriteOutfitsScreen() {
-  const { savedOutfits, removeSavedOutfit, renameOutfit } = useClosetStore();
+  const store = useClosetStore();
+  const { savedOutfits, removeSavedOutfit, renameOutfit } = store;
   const [selectedOutfit, setSelectedOutfit] = useState<Outfit | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  
+  console.log('FavoriteOutfitsScreen render - savedOutfits count:', savedOutfits.length);
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -30,12 +34,27 @@ export default function FavoriteOutfitsScreen() {
   };
 
   const handleRemoveOutfit = (outfitId: string) => {
+    console.log('handleRemoveOutfit called with ID:', outfitId);
+    
+    const performDelete = () => {
+      console.log('performDelete called - Deleting outfit with ID:', outfitId);
+      console.log('Current outfits before delete:', savedOutfits.length);
+      removeSavedOutfit(outfitId);
+      console.log('Delete function completed');
+      // Force a re-render
+      setRefreshKey(prev => prev + 1);
+    };
+
     Alert.alert(
       "Delete Outfit",
       "Are you sure you want to delete this outfit?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => removeSavedOutfit(outfitId) },
+        { 
+          text: "Delete", 
+          style: "destructive", 
+          onPress: performDelete
+        },
       ]
     );
   };
@@ -113,8 +132,12 @@ export default function FavoriteOutfitsScreen() {
               <Edit3 size={18} color={Colors.primary} />
             </Pressable>
             <Pressable
-              onPress={() => handleRemoveOutfit(item.id)}
-              style={styles.actionButton}
+              onPress={() => {
+                console.log('Delete button pressed for item:', item.id);
+                handleRemoveOutfit(item.id);
+              }}
+              style={[styles.actionButton, styles.deleteButton]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Trash2 size={18} color={Colors.error} />
             </Pressable>
@@ -135,8 +158,9 @@ export default function FavoriteOutfitsScreen() {
       <FlatList
         data={savedOutfits}
         renderItem={renderOutfit}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => `${item.id}-${refreshKey}`}
         contentContainerStyle={styles.listContent}
+        extraData={refreshKey}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
@@ -206,6 +230,10 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     padding: 16,
+  },
+  deleteButton: {
+    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+    borderRadius: 8,
   },
   emptyState: {
     padding: 24,
