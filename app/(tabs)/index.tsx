@@ -13,7 +13,7 @@ import { ClothingItem } from "@/types/clothing";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { items, saveOutfit } = useClosetStore();
+  const { items, saveOutfit, addToHistory } = useClosetStore();
   const { enabledCategories } = useSettingsStore();
   const [currentOutfit, setCurrentOutfit] = useState<Record<string, ClothingItem | null>>({});
   const [isGenerating, setIsGenerating] = useState(false);
@@ -27,6 +27,9 @@ export default function HomeScreen() {
     try {
       const outfit = await generateAIOutfit(items, enabledCategories);
       setCurrentOutfit(outfit);
+      
+      // Add to history automatically when outfit is generated
+      addToHistory({ items: outfit });
     } catch (error) {
       console.error("Failed to generate outfit:", error);
     } finally {
@@ -42,6 +45,14 @@ export default function HomeScreen() {
     saveOutfit({ items: currentOutfit });
   };
 
+  const handleOutfitHistory = () => {
+    router.push("/outfit-history");
+  };
+
+  const handleFavoriteOutfits = () => {
+    router.push("/favorite-outfits");
+  };
+
   const handleItemPress = (categoryId: string) => {
     // Map accessories to the accessories category for closet navigation
     const targetCategory = categoryId === "accessory1" || categoryId === "accessory2" 
@@ -54,8 +65,6 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-
-
       <View style={styles.outfitContainer}>
         {!hasItems ? (
           <View style={styles.emptyState}>
@@ -95,9 +104,19 @@ export default function HomeScreen() {
         </Pressable>
 
         {Object.keys(currentOutfit).length > 0 && (
-          <Pressable style={styles.saveButton} onPress={handleSaveOutfit}>
-            <Text style={styles.saveButtonText}>SAVE THIS OUTFIT</Text>
-          </Pressable>
+          <View style={styles.buttonRow}>
+            <Pressable style={styles.sideButton} onPress={handleOutfitHistory}>
+              <Text style={styles.sideButtonText}>OUTFIT HISTORY</Text>
+            </Pressable>
+            
+            <Pressable style={styles.saveButton} onPress={handleSaveOutfit}>
+              <Text style={styles.saveButtonText}>SAVE THIS OUTFIT</Text>
+            </Pressable>
+            
+            <Pressable style={styles.sideButton} onPress={handleFavoriteOutfits}>
+              <Text style={styles.sideButtonText}>FAVORITE OUTFITS</Text>
+            </Pressable>
+          </View>
         )}
       </View>
     </View>
@@ -109,7 +128,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-
   outfitContainer: {
     flex: 1,
     justifyContent: "center",
@@ -156,7 +174,13 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: Colors.darkGray,
   },
+  buttonRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
   saveButton: {
+    flex: 2,
     backgroundColor: Colors.background,
     paddingVertical: 12,
     borderRadius: 12,
@@ -167,7 +191,22 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: Colors.primary,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
+    textAlign: "center",
+  },
+  sideButton: {
+    flex: 1,
+    backgroundColor: Colors.lightGray,
+    paddingVertical: 12,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sideButtonText: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
   },
 });

@@ -59,6 +59,18 @@ export default function RootLayout() {
             title: "Category Items",
           }}
         />
+        <Stack.Screen
+          name="outfit-history"
+          options={{
+            title: "Outfit History",
+          }}
+        />
+        <Stack.Screen
+          name="favorite-outfits"
+          options={{
+            title: "Favorite Outfits",
+          }}
+        />
       </Stack>
     </>
   );

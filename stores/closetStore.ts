@@ -5,19 +5,23 @@ import { ClothingItem, Outfit } from "@/types/clothing";
 
 interface ClosetState {
   items: ClothingItem[];
-  outfits: Outfit[];
+  savedOutfits: Outfit[];
+  outfitHistory: Outfit[];
   addItem: (item: Omit<ClothingItem, "id" | "createdAt">) => void;
   removeItem: (id: string) => void;
   getItemsByCategory: (categoryId: string) => ClothingItem[];
   saveOutfit: (outfit: Omit<Outfit, "id" | "createdAt">) => void;
-  removeOutfit: (id: string) => void;
+  addToHistory: (outfit: Omit<Outfit, "id" | "createdAt">) => void;
+  removeSavedOutfit: (id: string) => void;
+  clearHistory: () => void;
 }
 
 export const useClosetStore = create<ClosetState>()(
   persist(
     (set, get) => ({
       items: [],
-      outfits: [],
+      savedOutfits: [],
+      outfitHistory: [],
       
       addItem: (item) => {
         const newItem: ClothingItem = {
@@ -47,14 +51,29 @@ export const useClosetStore = create<ClosetState>()(
           createdAt: Date.now(),
         };
         set((state) => ({
-          outfits: [...state.outfits, newOutfit],
+          savedOutfits: [...state.savedOutfits, newOutfit],
         }));
       },
       
-      removeOutfit: (id) => {
+      addToHistory: (outfit) => {
+        const newOutfit: Outfit = {
+          ...outfit,
+          id: Date.now().toString(),
+          createdAt: Date.now(),
+        };
         set((state) => ({
-          outfits: state.outfits.filter((outfit) => outfit.id !== id),
+          outfitHistory: [newOutfit, ...state.outfitHistory].slice(0, 50), // Keep last 50 outfits
         }));
+      },
+      
+      removeSavedOutfit: (id) => {
+        set((state) => ({
+          savedOutfits: state.savedOutfits.filter((outfit) => outfit.id !== id),
+        }));
+      },
+      
+      clearHistory: () => {
+        set({ outfitHistory: [] });
       },
     }),
     {

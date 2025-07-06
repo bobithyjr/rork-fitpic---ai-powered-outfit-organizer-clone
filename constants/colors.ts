@@ -1,5 +1,5 @@
 export default {
-  primary: "#3B82F6", // Blue
+  primary: "#4f123e", // Dark purple/maroon
   secondary: "#F59E0B", // Amber
   background: "#FFFFFF",
   text: "#1F2937",
