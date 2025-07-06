@@ -105,16 +105,16 @@ export default function HomeScreen() {
 
         {Object.keys(currentOutfit).length > 0 && (
           <View style={styles.buttonRow}>
-            <Pressable style={styles.sideButton} onPress={handleOutfitHistory}>
-              <Text style={styles.sideButtonText}>OUTFIT HISTORY</Text>
+            <Pressable style={styles.actionButton} onPress={handleOutfitHistory}>
+              <Text style={styles.actionButtonText}>OUTFIT HISTORY</Text>
             </Pressable>
             
-            <Pressable style={styles.saveButton} onPress={handleSaveOutfit}>
-              <Text style={styles.saveButtonText}>SAVE THIS OUTFIT</Text>
+            <Pressable style={styles.actionButton} onPress={handleSaveOutfit}>
+              <Text style={styles.actionButtonText}>SAVE THIS OUTFIT</Text>
             </Pressable>
             
-            <Pressable style={styles.sideButton} onPress={handleFavoriteOutfits}>
-              <Text style={styles.sideButtonText}>FAVORITE OUTFITS</Text>
+            <Pressable style={styles.actionButton} onPress={handleFavoriteOutfits}>
+              <Text style={styles.actionButtonText}>FAVORITE OUTFITS</Text>
             </Pressable>
           </View>
         )}
@@ -179,23 +179,7 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: "center",
   },
-  saveButton: {
-    flex: 2,
-    backgroundColor: Colors.background,
-    paddingVertical: 12,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  saveButtonText: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  sideButton: {
+  actionButton: {
     flex: 1,
     backgroundColor: Colors.background,
     paddingVertical: 12,
@@ -205,7 +189,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.primary,
   },
-  sideButtonText: {
+  actionButtonText: {
     color: Colors.primary,
     fontSize: 12,
     fontWeight: "600",
