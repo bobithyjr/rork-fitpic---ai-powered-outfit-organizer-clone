@@ -106,15 +106,15 @@ export default function HomeScreen() {
         {Object.keys(currentOutfit).length > 0 && (
           <View style={styles.buttonRow}>
             <Pressable style={styles.actionButton} onPress={handleOutfitHistory}>
-              <Text style={styles.actionButtonText}>OUTFIT HISTORY</Text>
+              <Text style={styles.actionButtonText}>HISTORY</Text>
             </Pressable>
             
             <Pressable style={styles.actionButton} onPress={handleSaveOutfit}>
-              <Text style={styles.actionButtonText}>SAVE THIS OUTFIT</Text>
+              <Text style={styles.actionButtonText}>SAVE TO FAVORITES</Text>
             </Pressable>
             
             <Pressable style={styles.actionButton} onPress={handleFavoriteOutfits}>
-              <Text style={styles.actionButtonText}>FAVORITE OUTFITS</Text>
+              <Text style={styles.actionButtonText}>FAVORITES</Text>
             </Pressable>
           </View>
         )}
