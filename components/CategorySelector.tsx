@@ -13,58 +13,75 @@ export default function CategorySelector({
   onSelectCategory,
 }: Props) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.container}
-    >
-      {CLOSET_CATEGORIES.map((category) => (
-        <Pressable
-          key={category.id}
-          style={[
-            styles.categoryButton,
-            selectedCategory === category.id && styles.selectedCategory,
-          ]}
-          onPress={() => onSelectCategory(category.id)}
-        >
-          <Text
+    <View style={styles.container}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        style={styles.scrollView}
+      >
+        {CLOSET_CATEGORIES.map((category) => (
+          <Pressable
+            key={category.id}
             style={[
-              styles.categoryText,
-              selectedCategory === category.id && styles.selectedCategoryText,
+              styles.categoryButton,
+              selectedCategory === category.id && styles.selectedCategory,
             ]}
+            onPress={() => onSelectCategory(category.id)}
           >
-            {category.name}
-          </Text>
-        </Pressable>
-      ))}
-    </ScrollView>
+            <Text
+              style={[
+                styles.categoryText,
+                selectedCategory === category.id && styles.selectedCategoryText,
+              ]}
+              numberOfLines={1}
+            >
+              {category.name}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 12,
     backgroundColor: Colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.lightGray,
+    paddingVertical: 12,
+  },
+  scrollView: {
+    flexGrow: 0,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+    alignItems: 'center',
   },
   categoryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     backgroundColor: Colors.lightGray,
-    minWidth: 80,
+    minWidth: 70,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.mediumGray,
   },
   selectedCategory: {
     backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   categoryText: {
     color: Colors.text,
-    fontWeight: "500",
-    fontSize: 14,
+    fontWeight: "600",
+    fontSize: 12,
     textAlign: 'center',
+    textTransform: 'uppercase',
   },
   selectedCategoryText: {
     color: "white",

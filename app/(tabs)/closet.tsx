@@ -55,27 +55,42 @@ export default function ClosetScreen() {
   const renderItem = ({ item }: { item: any }) => {
     if (item.id === "add") {
       return (
-        <EmptyClothingItem
-          categoryName={`ADD ${
-            selectedCategory === "all"
-              ? "ITEM"
-              : selectedCategory === "accessories"
-              ? "ACCESSORY"
-              : CLOSET_CATEGORIES.find((c) => c.id === selectedCategory)?.name || "ITEM"
-          }`}
-          onPress={handleAddItem}
-        />
+        <View style={styles.itemContainer}>
+          <EmptyClothingItem
+            categoryName={`ADD ${
+              selectedCategory === "all"
+                ? "ITEM"
+                : selectedCategory === "accessories"
+                ? "ACCESSORY"
+                : CLOSET_CATEGORIES.find((c) => c.id === selectedCategory)?.name || "ITEM"
+            }`}
+            onPress={handleAddItem}
+          />
+        </View>
       );
     }
     return (
-      <ClothingItem
-        item={item}
-        onPress={() => handleItemPress(item.id)}
-        onRemove={() => handleRemoveItem(item.id)}
-        showRemoveButton
-      />
+      <View style={styles.itemContainer}>
+        <ClothingItem
+          item={item}
+          onPress={() => handleItemPress(item.id)}
+          onRemove={() => handleRemoveItem(item.id)}
+          showRemoveButton
+        />
+      </View>
     );
   };
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyStateText}>
+        {selectedCategory === "all" ? "NO ITEMS IN YOUR CLOSET YET." : "NO ITEMS IN THIS CATEGORY YET."}
+      </Text>
+      <Pressable style={styles.emptyAddButton} onPress={handleAddItem}>
+        <Text style={styles.emptyAddButtonText}>ADD ITEM</Text>
+      </Pressable>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -84,21 +99,30 @@ export default function ClosetScreen() {
         onSelectCategory={handleCategorySelect}
       />
 
-      <FlatList
-        data={selectedCategory === "all" ? filteredItems : [{ id: "add" }, ...filteredItems]}
-        renderItem={renderItem}
-        keyExtractor={(item) => (item.id === "add" ? "add" : item.id)}
-        numColumns={3}
-        contentContainerStyle={styles.listContent}
-        columnWrapperStyle={styles.columnWrapper}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              {selectedCategory === "all" ? "NO ITEMS IN YOUR CLOSET YET." : "NO ITEMS IN THIS CATEGORY YET."}
-            </Text>
-          </View>
-        }
-      />
+      <View style={styles.contentContainer}>
+        {filteredItems.length === 0 && selectedCategory === "all" ? (
+          renderEmptyState()
+        ) : (
+          <FlatList
+            data={selectedCategory === "all" ? filteredItems : [{ id: "add" }, ...filteredItems]}
+            renderItem={renderItem}
+            keyExtractor={(item) => (item.id === "add" ? "add" : item.id)}
+            numColumns={3}
+            contentContainerStyle={styles.listContent}
+            columnWrapperStyle={styles.columnWrapper}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              selectedCategory !== "all" ? (
+                <View style={styles.categoryEmptyState}>
+                  <Text style={styles.emptyStateText}>
+                    NO ITEMS IN THIS CATEGORY YET.
+                  </Text>
+                </View>
+              ) : null
+            }
+          />
+        )}
+      </View>
 
       <Pressable style={styles.fab} onPress={handleAddItem}>
         <Plus size={24} color="white" />
@@ -112,23 +136,50 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  contentContainer: {
+    flex: 1,
+  },
   listContent: {
     padding: 16,
-    paddingBottom: 80,
+    paddingBottom: 100,
   },
   columnWrapper: {
     justifyContent: "space-between",
     marginBottom: 16,
-    paddingHorizontal: 4,
+  },
+  itemContainer: {
+    flex: 1,
+    marginHorizontal: 4,
   },
   emptyState: {
+    flex: 1,
     padding: 24,
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 300,
+  },
+  categoryEmptyState: {
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 200,
   },
   emptyStateText: {
     fontSize: 16,
     color: Colors.darkGray,
     textAlign: "center",
+    marginBottom: 16,
+  },
+  emptyAddButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  emptyAddButtonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 16,
   },
   fab: {
     position: "absolute",
