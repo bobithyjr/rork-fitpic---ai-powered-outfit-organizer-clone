@@ -29,15 +29,22 @@ export default function RootLayout() {
   }, [fontsLoaded]);
   
   const initializeApp = async () => {
-    const userStore = useUserStore.getState();
-    const closetStore = useClosetStore.getState();
-    
-    // Initialize user ID
-    await userStore.initializeUser();
-    
-    // Load data from cloud if sync is enabled
-    if (userStore.isCloudSyncEnabled) {
-      await closetStore.loadFromCloud();
+    try {
+      const userStore = useUserStore.getState();
+      const closetStore = useClosetStore.getState();
+      
+      // Initialize user ID
+      await userStore.initializeUser();
+      
+      // Get updated state after initialization
+      const updatedUserStore = useUserStore.getState();
+      
+      // Auto-load data from cloud if sync is enabled and user is authenticated
+      if (updatedUserStore.isCloudSyncEnabled && updatedUserStore.userId) {
+        await closetStore.autoLoadFromCloud();
+      }
+    } catch (error) {
+      console.error('Failed to initialize app:', error);
     }
   };
 

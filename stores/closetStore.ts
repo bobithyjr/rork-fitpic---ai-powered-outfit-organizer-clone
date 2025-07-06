@@ -21,6 +21,7 @@ interface ClosetState {
   clearHistory: () => void;
   syncToCloud: () => Promise<void>;
   loadFromCloud: () => Promise<void>;
+  autoLoadFromCloud: () => Promise<void>;
   setData: (data: { items: ClothingItem[]; savedOutfits: Outfit[]; outfitHistory: Outfit[] }) => void;
 }
 
@@ -170,6 +171,58 @@ export const useClosetStore = create<ClosetState>()(
           console.error('Failed to load from cloud:', error);
         } finally {
           set({ isLoading: false });
+        }
+      },
+      
+      autoLoadFromCloud: async () => {
+        const userStore = useUserStore.getState();
+        if (!userStore.isCloudSyncEnabled || !userStore.userId || userStore.hasAutoLoaded) {
+          return;
+        }
+        
+        try {
+          const cloudData = await trpcClient.closet.get.query({
+            userId: userStore.userId,
+          });
+          
+          // Only auto-load if there's cloud data
+          if (cloudData.lastUpdated) {
+            const currentState = get();
+            const localLastUpdate = currentState.lastSyncTime || 0;
+            const hasLocalData = currentState.items.length > 0 || currentState.savedOutfits.length > 0;
+            
+            // Auto-load scenarios:
+            // 1. No local data exists (fresh install or cleared data)
+            // 2. Cloud data is significantly newer (more than 1 minute)
+            // 3. User has Apple ID (more reliable identification)
+            const shouldAutoLoad = !hasLocalData || 
+                                   cloudData.lastUpdated > (localLastUpdate + 60000) ||
+                                   (userStore.appleUserId && cloudData.lastUpdated > localLastUpdate);
+            
+            if (shouldAutoLoad) {
+              console.log('Auto-loading data from cloud...', {
+                hasLocalData,
+                cloudLastUpdate: new Date(cloudData.lastUpdated),
+                localLastUpdate: new Date(localLastUpdate),
+                hasAppleId: !!userStore.appleUserId
+              });
+              
+              set({
+                items: cloudData.items || [],
+                savedOutfits: cloudData.savedOutfits || [],
+                outfitHistory: cloudData.outfitHistory || [],
+                lastSyncTime: cloudData.lastUpdated,
+              });
+              userStore.setLastSyncTime(cloudData.lastUpdated);
+            } else {
+              console.log('Skipping auto-load - local data is current');
+            }
+          }
+          
+          userStore.setHasAutoLoaded(true);
+        } catch (error) {
+          console.error('Failed to auto-load from cloud:', error);
+          userStore.setHasAutoLoaded(true); // Mark as attempted even if failed
         }
       },
       

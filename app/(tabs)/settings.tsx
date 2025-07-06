@@ -65,7 +65,44 @@ export default function SettingsScreen() {
   const handleAppleSignIn = async () => {
     try {
       await signInWithApple();
-      Alert.alert("Success", "You have been signed in with Apple ID. Your data will now be synced using your Apple ID.");
+      
+      // After successful sign-in, check if there's cloud data to load
+      const userState = useUserStore.getState();
+      if (userState.userId) {
+        const cloudData = await trpcClient.closet.get.query({
+          userId: userState.userId,
+        });
+        
+        if (cloudData.lastUpdated && (cloudData.items?.length > 0 || cloudData.savedOutfits?.length > 0)) {
+          // Ask user if they want to load cloud data or keep local data
+          Alert.alert(
+            'Cloud Data Found',
+            'We found existing data in your cloud account. Would you like to load it or keep your current local data?',
+            [
+              {
+                text: 'Keep Local',
+                onPress: async () => {
+                  // Sync current local data to cloud
+                  await syncToCloud();
+                  Alert.alert("Success", "You have been signed in with Apple ID. Your local data has been synced to the cloud.");
+                },
+              },
+              {
+                text: 'Load Cloud Data',
+                onPress: async () => {
+                  // Load data from cloud
+                  await loadFromCloud();
+                  Alert.alert("Success", "You have been signed in with Apple ID and your cloud data has been loaded.");
+                },
+              },
+            ]
+          );
+        } else {
+          // No cloud data, sync current data to cloud
+          await syncToCloud();
+          Alert.alert("Success", "You have been signed in with Apple ID. Your data will now be synced using your Apple ID.");
+        }
+      }
     } catch (error: any) {
       if (error.code !== 'ERR_CANCELED') {
         Alert.alert("Error", "Failed to sign in with Apple. Please try again.");

@@ -12,11 +12,13 @@ interface UserState {
   isAuthenticated: boolean;
   isCloudSyncEnabled: boolean;
   lastSyncTime: number | null;
+  hasAutoLoaded: boolean;
   initializeUser: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => void;
   toggleCloudSync: () => void;
   setLastSyncTime: (time: number) => void;
+  setHasAutoLoaded: (loaded: boolean) => void;
 }
 
 // Generate a fallback user ID for web or when Apple Sign-In is not available
@@ -51,6 +53,7 @@ export const useUserStore = create<UserState>()(
       isAuthenticated: false,
       isCloudSyncEnabled: true, // Default to enabled
       lastSyncTime: null,
+      hasAutoLoaded: false,
       
       initializeUser: async () => {
         const state = get();
@@ -110,6 +113,7 @@ export const useUserStore = create<UserState>()(
             userEmail: email || null,
             appleUserId: user,
             isAuthenticated: true,
+            hasAutoLoaded: false, // Reset auto-load flag for new sign-in
           });
           
         } catch (error: any) {
@@ -128,17 +132,39 @@ export const useUserStore = create<UserState>()(
           appleUserId: null,
           isAuthenticated: false,
           lastSyncTime: null,
+          hasAutoLoaded: false,
         });
       },
       
       toggleCloudSync: () => {
-        set((state) => ({
-          isCloudSyncEnabled: !state.isCloudSyncEnabled,
-        }));
+        const currentState = get();
+        const newSyncState = !currentState.isCloudSyncEnabled;
+        
+        set({
+          isCloudSyncEnabled: newSyncState,
+          hasAutoLoaded: false, // Reset auto-load flag when toggling sync
+        });
+        
+        // If enabling sync and user is authenticated, trigger auto-load
+        if (newSyncState && currentState.userId) {
+          setTimeout(async () => {
+            try {
+              const { useClosetStore } = await import('./closetStore');
+              const closetStore = useClosetStore.getState();
+              await closetStore.autoLoadFromCloud();
+            } catch (error) {
+              console.error('Failed to auto-load after enabling sync:', error);
+            }
+          }, 100);
+        }
       },
       
       setLastSyncTime: (time) => {
         set({ lastSyncTime: time });
+      },
+      
+      setHasAutoLoaded: (loaded) => {
+        set({ hasAutoLoaded: loaded });
       },
     }),
     {
