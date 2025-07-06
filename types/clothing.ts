@@ -9,6 +9,7 @@ export type ClothingItem = {
 
 export type Outfit = {
   id: string;
+  name?: string;
   items: Record<string, ClothingItem | null>;
   createdAt: number;
 };

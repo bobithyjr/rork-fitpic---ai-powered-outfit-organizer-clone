@@ -13,6 +13,7 @@ interface ClosetState {
   saveOutfit: (outfit: Omit<Outfit, "id" | "createdAt">) => void;
   addToHistory: (outfit: Omit<Outfit, "id" | "createdAt">) => void;
   removeSavedOutfit: (id: string) => void;
+  renameOutfit: (id: string, name: string) => void;
   clearHistory: () => void;
 }
 
@@ -69,6 +70,14 @@ export const useClosetStore = create<ClosetState>()(
       removeSavedOutfit: (id) => {
         set((state) => ({
           savedOutfits: state.savedOutfits.filter((outfit) => outfit.id !== id),
+        }));
+      },
+      
+      renameOutfit: (id, name) => {
+        set((state) => ({
+          savedOutfits: state.savedOutfits.map((outfit) =>
+            outfit.id === id ? { ...outfit, name: name.trim() || undefined } : outfit
+          ),
         }));
       },
       

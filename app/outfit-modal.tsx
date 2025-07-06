@@ -27,6 +27,10 @@ export default function OutfitModal({ visible, outfit, onClose, title }: OutfitM
     });
   };
 
+  const getOutfitDisplayName = () => {
+    return outfit.name || formatDate(outfit.createdAt);
+  };
+
   return (
     <Modal
       visible={visible}
@@ -42,8 +46,11 @@ export default function OutfitModal({ visible, outfit, onClose, title }: OutfitM
           </Pressable>
         </View>
         
-        <View style={styles.dateContainer}>
-          <Text style={styles.dateText}>{formatDate(outfit.createdAt)}</Text>
+        <View style={styles.nameContainer}>
+          <Text style={styles.outfitName}>{getOutfitDisplayName()}</Text>
+          {outfit.name && (
+            <Text style={styles.dateText}>{formatDate(outfit.createdAt)}</Text>
+          )}
         </View>
 
         <View style={styles.outfitContainer}>
@@ -81,13 +88,21 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 8,
   },
-  dateContainer: {
+  nameContainer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
+    alignItems: "center",
+  },
+  outfitName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.text,
+    textAlign: "center",
+    marginBottom: 4,
   },
   dateText: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "400",
     color: Colors.darkGray,
     textAlign: "center",
   },
