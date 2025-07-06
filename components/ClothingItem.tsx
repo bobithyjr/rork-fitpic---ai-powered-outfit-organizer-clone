@@ -1,10 +1,10 @@
 import React from "react";
 import { StyleSheet, View, Text, Pressable } from "react-native";
-import { Image } from "expo-image";
 import { X } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { ClothingItem as ClothingItemType } from "@/types/clothing";
 import { CLOTHING_CATEGORIES } from "@/constants/categories";
+import CloudImage from "./CloudImage";
 
 type Props = {
   item: ClothingItemType;
@@ -32,7 +32,7 @@ export default function ClothingItem({
       style={[styles.container, sizeStyles[size]]}
       onPress={onPress}
     >
-      <Image
+      <CloudImage
         source={{ uri: item.imageUri }}
         style={styles.image}
         contentFit="cover"

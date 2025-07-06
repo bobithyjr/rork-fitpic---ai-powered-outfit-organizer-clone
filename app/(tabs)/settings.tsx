@@ -32,7 +32,7 @@ export default function SettingsScreen() {
   const handleDeleteCloudData = async () => {
     Alert.alert(
       "Delete Cloud Data",
-      "This will permanently delete all your closet data from the cloud. Your local data will remain unchanged. This action cannot be undone.",
+      "This will permanently delete all your closet data and images from the cloud. Your local data will remain unchanged. This action cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -42,7 +42,7 @@ export default function SettingsScreen() {
             try {
               if (userId) {
                 await trpcClient.closet.deleteUserData.mutate({ userId });
-                Alert.alert("Success", "Your cloud data has been deleted.");
+                Alert.alert("Success", "Your cloud data and images have been deleted.");
               }
             } catch (error) {
               Alert.alert("Error", "Failed to delete cloud data. Please try again.");
@@ -56,7 +56,7 @@ export default function SettingsScreen() {
   const handleManualSync = async () => {
     try {
       await syncToCloud();
-      Alert.alert("Success", "Your data has been synced to the cloud.");
+      Alert.alert("Success", "Your data and images have been synced to the cloud.");
     } catch (error) {
       Alert.alert("Error", "Failed to sync data. Please try again.");
     }
@@ -133,7 +133,7 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>CLOUD SYNC</Text>
         <Text style={styles.sectionDescription}>
-          SYNC YOUR CLOSET DATA ACROSS DEVICES USING YOUR APPLE ID OR DEVICE ID. APPLE ID PROVIDES PERSISTENT SYNC EVEN AFTER APP REINSTALLATION.
+          SYNC YOUR CLOSET DATA AND IMAGES ACROSS DEVICES USING YOUR APPLE ID OR DEVICE ID. APPLE ID PROVIDES PERSISTENT SYNC EVEN AFTER APP REINSTALLATION. ALL IMAGES ARE STORED SECURELY IN THE CLOUD.
         </Text>
         
         <View style={styles.settingRow}>
@@ -155,7 +155,7 @@ export default function SettingsScreen() {
             {Platform.OS === 'ios' && !appleUserId && (
               <View style={styles.appleSignInContainer}>
                 <Text style={styles.appleSignInDescription}>
-                  Sign in with Apple ID for secure cloud sync that persists even if you uninstall the app. Your data will automatically restore when you reinstall.
+                  Sign in with Apple ID for secure cloud sync that persists even if you uninstall the app. Your data and images will automatically restore when you reinstall.
                 </Text>
                 <AppleAuthentication.AppleAuthenticationButton
                   buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
@@ -260,7 +260,7 @@ export default function SettingsScreen() {
         <Text style={styles.aboutText}>
           FITPIC IS YOUR PERSONAL AI STYLIST THAT HELPS YOU CREATE OUTFITS FROM YOUR OWN WARDROBE.
           SIMPLY ADD YOUR CLOTHING ITEMS TO YOUR VIRTUAL CLOSET, AND LET FITPIC SUGGEST STYLISH COMBINATIONS.
-          YOUR DATA IS STORED LOCALLY AND OPTIONALLY SYNCED TO THE CLOUD USING YOUR APPLE ID OR DEVICE ID FOR SEAMLESS ACCESS ACROSS DEVICES.
+          YOUR DATA AND IMAGES ARE STORED LOCALLY AND OPTIONALLY SYNCED TO THE CLOUD USING YOUR APPLE ID OR DEVICE ID FOR SEAMLESS ACCESS ACROSS DEVICES.
         </Text>
         <Text style={styles.versionText}>VERSION 1.0.0</Text>
       </View>
@@ -284,7 +284,7 @@ export default function SettingsScreen() {
           {"\n"}• YOUR APPLE ID (WHEN YOU SIGN IN WITH APPLE)
           {"\n"}• YOUR EMAIL ADDRESS (WHEN PROVIDED BY APPLE SIGN-IN)
           {"\n"}• A UNIQUE DEVICE IDENTIFIER FOR CLOUD SYNC (WHEN NOT USING APPLE ID)
-          {"\n\n"}DATA IS STORED LOCALLY ON YOUR DEVICE AND OPTIONALLY SYNCED TO OUR SECURE CLOUD SERVERS WHEN CLOUD SYNC IS ENABLED.
+          {"\n\n"}DATA IS STORED LOCALLY ON YOUR DEVICE AND OPTIONALLY SYNCED TO OUR SECURE CLOUD SERVERS WHEN CLOUD SYNC IS ENABLED. IMAGES ARE UPLOADED TO CLOUD STORAGE FOR PERSISTENT ACCESS ACROSS DEVICES.
         </Text>
 
         <Text style={styles.privacySubtitle}>DATA USAGE</Text>
@@ -299,35 +299,39 @@ export default function SettingsScreen() {
           {"\n"}• SYNC YOUR DATA ACROSS DEVICES WHEN CLOUD SYNC IS ENABLED
           {"\n"}• RESTORE YOUR DATA IF YOU REINSTALL THE APP (WHEN CLOUD SYNC IS ENABLED)
           {"\n"}• AUTOMATICALLY LOAD YOUR DATA WHEN YOU SIGN IN WITH APPLE ID
+          {"\n"}• STORE AND SERVE YOUR CLOTHING IMAGES FROM CLOUD STORAGE
+          {"\n"}• PROVIDE PERSISTENT IMAGE ACCESS EVEN AFTER APP REINSTALLATION
         </Text>
 
-        <Text style={styles.privacySubtitle}>CLOUD SYNC & DATA SHARING</Text>
+        <Text style={styles.privacySubtitle}>CLOUD SYNC & IMAGE STORAGE</Text>
         <Text style={styles.privacyText}>
           WHEN CLOUD SYNC IS ENABLED:
           {"\n"}• YOUR CLOSET DATA IS SECURELY TRANSMITTED TO AND STORED ON OUR SERVERS
+          {"\n"}• YOUR CLOTHING IMAGES ARE UPLOADED TO SECURE CLOUD STORAGE
           {"\n"}• DATA IS ASSOCIATED WITH YOUR APPLE ID (PREFERRED) OR DEVICE IDENTIFIER
           {"\n"}• APPLE ID AUTHENTICATION ALLOWS DATA RECOVERY EVEN AFTER APP REINSTALLATION
-          {"\n"}• YOUR DATA IS ENCRYPTED IN TRANSIT AND AT REST
-          {"\n"}• WE DO NOT SHARE, SELL, OR PROVIDE YOUR DATA TO THIRD PARTIES
+          {"\n"}• YOUR DATA AND IMAGES ARE ENCRYPTED IN TRANSIT AND AT REST
+          {"\n"}• WE DO NOT SHARE, SELL, OR PROVIDE YOUR DATA OR IMAGES TO THIRD PARTIES
           {"\n"}• YOU CAN DISABLE CLOUD SYNC AT ANY TIME IN SETTINGS
-          {"\n"}• YOU CAN DELETE YOUR CLOUD DATA AT ANY TIME
+          {"\n"}• YOU CAN DELETE YOUR CLOUD DATA AND IMAGES AT ANY TIME
           {"\n"}• YOU CAN SIGN OUT OF APPLE ID TO STOP APPLE ID-BASED SYNC
-          {"\n"}• APPLE ID USERS: YOUR DATA AUTOMATICALLY RESTORES WHEN YOU REINSTALL AND SIGN IN
+          {"\n"}• APPLE ID USERS: YOUR DATA AND IMAGES AUTOMATICALLY RESTORE WHEN YOU REINSTALL AND SIGN IN
           {"\n"}• DEVICE ID USERS: DATA RECOVERY IS LIMITED TO THE SAME DEVICE
-          {"\n\n"}WHEN CLOUD SYNC IS DISABLED, ALL DATA REMAINS EXCLUSIVELY ON YOUR DEVICE.
+          {"\n\n"}WHEN CLOUD SYNC IS DISABLED, ALL DATA AND IMAGES REMAIN EXCLUSIVELY ON YOUR DEVICE.
         </Text>
 
         <Text style={styles.privacySubtitle}>AUTOMATIC DATA RESTORATION</Text>
         <Text style={styles.privacyText}>
           FOR APPLE ID USERS:
           {"\n"}• WHEN YOU REINSTALL THE APP AND SIGN IN WITH THE SAME APPLE ID, YOUR DATA AUTOMATICALLY LOADS
-          {"\n"}• THIS INCLUDES ALL CLOTHING ITEMS, FAVORITE OUTFITS, PREFERENCES, AND OUTFIT HISTORY
+          {"\n"}• THIS INCLUDES ALL CLOTHING ITEMS, IMAGES, FAVORITE OUTFITS, PREFERENCES, AND OUTFIT HISTORY
           {"\n"}• THE APP CHECKS FOR EXISTING CLOUD DATA AND LOADS IT AUTOMATICALLY
           {"\n"}• YOU WILL BE NOTIFIED IF CLOUD DATA IS FOUND AND GIVEN OPTIONS TO LOAD OR KEEP LOCAL DATA
-          {"\n"}• THIS FEATURE ENSURES YOUR CLOSET IS NEVER LOST EVEN IF YOU CHANGE DEVICES
+          {"\n"}• THIS FEATURE ENSURES YOUR CLOSET AND IMAGES ARE NEVER LOST EVEN IF YOU CHANGE DEVICES
+          {"\n"}• ALL IMAGES ARE AUTOMATICALLY DOWNLOADED FROM CLOUD STORAGE WHEN NEEDED
           {"\n\n"}FOR DEVICE ID USERS:
           {"\n"}• DATA RESTORATION IS LIMITED AND MAY NOT WORK ACROSS DIFFERENT DEVICES
-          {"\n"}• WE RECOMMEND USING APPLE ID FOR RELIABLE DATA PERSISTENCE
+          {"\n"}• WE RECOMMEND USING APPLE ID FOR RELIABLE DATA AND IMAGE PERSISTENCE
         </Text>
 
         <Text style={styles.privacySubtitle}>DEVICE PERMISSIONS</Text>
@@ -337,7 +341,8 @@ export default function SettingsScreen() {
           {"\n"}• PHOTO LIBRARY ACCESS: TO SELECT EXISTING IMAGES OF CLOTHING
           {"\n"}• HAPTIC FEEDBACK (MOBILE ONLY): TO PROVIDE TACTILE FEEDBACK WHEN GENERATING OUTFITS
           {"\n"}• APPLE ID ACCESS (OPTIONAL): FOR SECURE CLOUD SYNC AND DATA PERSISTENCE
-          {"\n\n"}ALL IMAGES ARE STORED LOCALLY ON YOUR DEVICE AND OPTIONALLY SYNCED TO CLOUD WHEN ENABLED. IMAGES ARE NEVER SHARED WITH EXTERNAL SERVICES.
+          {"\n"}• INTERNET ACCESS: TO UPLOAD IMAGES TO CLOUD STORAGE AND SYNC DATA
+          {"\n\n"}ALL IMAGES ARE STORED LOCALLY ON YOUR DEVICE AND OPTIONALLY UPLOADED TO SECURE CLOUD STORAGE WHEN SYNC IS ENABLED. IMAGES ARE NEVER SHARED WITH EXTERNAL SERVICES EXCEPT FOR CLOUD STORAGE.
         </Text>
 
         <Text style={styles.privacySubtitle}>DATA RETENTION</Text>
@@ -350,11 +355,12 @@ export default function SettingsScreen() {
           {"\n"}• UNINSTALL THE APP
           {"\n\n"}CLOUD DATA (WHEN SYNC IS ENABLED):
           {"\n"}• PERSISTS EVEN IF YOU UNINSTALL THE APP (ESPECIALLY WITH APPLE ID)
-          {"\n"}• ALLOWS DATA RECOVERY WHEN YOU REINSTALL AND SIGN IN AGAIN
+          {"\n"}• ALLOWS DATA AND IMAGE RECOVERY WHEN YOU REINSTALL AND SIGN IN AGAIN
           {"\n"}• CAN BE MANUALLY DELETED FROM SETTINGS
           {"\n"}• IS AUTOMATICALLY DELETED IF INACTIVE FOR 2 YEARS
           {"\n"}• APPLE ID-BASED DATA IS MORE PERSISTENT THAN DEVICE ID-BASED DATA
           {"\n"}• AUTOMATICALLY RESTORES FOR APPLE ID USERS UPON APP REINSTALLATION
+          {"\n"}• INCLUDES ALL UPLOADED IMAGES WHICH ARE STORED SECURELY IN CLOUD STORAGE
           {"\n\n"}OUTFIT HISTORY IS LIMITED TO 50 RECENT OUTFITS TO MANAGE STORAGE.
         </Text>
 
@@ -364,15 +370,16 @@ export default function SettingsScreen() {
           {"\n"}• ENABLE OR DISABLE CLOUD SYNC AT ANY TIME
           {"\n"}• SIGN IN WITH APPLE ID FOR PERSISTENT DATA ACROSS DEVICES AND REINSTALLS
           {"\n"}• SIGN OUT OF APPLE ID TO STOP APPLE ID-BASED SYNC
-          {"\n"}• DELETE YOUR CLOUD DATA WHILE KEEPING LOCAL DATA
-          {"\n"}• DELETE INDIVIDUAL CLOTHING ITEMS AT ANY TIME
+          {"\n"}• DELETE YOUR CLOUD DATA AND IMAGES WHILE KEEPING LOCAL DATA
+          {"\n"}• DELETE INDIVIDUAL CLOTHING ITEMS AND THEIR IMAGES AT ANY TIME
           {"\n"}• DELETE INDIVIDUAL FAVORITE OUTFITS
           {"\n"}• RENAME YOUR FAVORITE OUTFITS
           {"\n"}• CLEAR YOUR ENTIRE OUTFIT HISTORY
           {"\n"}• TOGGLE CLOTHING CATEGORIES ON/OFF FOR OUTFIT GENERATION
           {"\n"}• RESET ALL PREFERENCES TO DEFAULTS
-          {"\n"}• REQUEST COMPLETE DATA DELETION BY CONTACTING US
+          {"\n"}• REQUEST COMPLETE DATA AND IMAGE DELETION BY CONTACTING US
           {"\n"}• CONTROL WHETHER YOUR DATA AUTOMATICALLY RESTORES AFTER REINSTALLATION
+          {"\n"}• CHOOSE WHETHER TO UPLOAD IMAGES TO CLOUD STORAGE OR KEEP THEM LOCAL
         </Text>
 
         <Text style={styles.privacySubtitle}>CONTACT INFORMATION</Text>

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Platform,
   Modal,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -16,12 +17,15 @@ import { Image } from "expo-image";
 import { Camera, X, ChevronDown } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
+import { useUserStore } from "@/stores/userStore";
 import { CLOTHING_CATEGORIES } from "@/constants/categories";
+import { uploadImageToCloud } from "@/utils/imageUpload";
 
 export default function AddItemScreen() {
   const router = useRouter();
   const { category: initialCategory } = useLocalSearchParams<{ category: string }>();
   const { addItem } = useClosetStore();
+  const { userId, isCloudSyncEnabled } = useUserStore();
 
   const [name, setName] = useState("");
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -40,7 +44,7 @@ export default function AddItemScreen() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     
     if (status !== "granted") {
-      alert("Sorry, we need camera permissions to make this work!");
+      Alert.alert("Permission Required", "We need camera permissions to take photos of your clothing items.");
       return;
     }
 
@@ -60,7 +64,7 @@ export default function AddItemScreen() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (status !== "granted") {
-      alert("Sorry, we need camera roll permissions to make this work!");
+      Alert.alert("Permission Required", "We need photo library permissions to select images of your clothing items.");
       return;
     }
 
@@ -81,25 +85,43 @@ export default function AddItemScreen() {
     setShowCategoryPicker(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim() || !imageUri || !selectedCategoryId) {
-      alert("Please provide a name and image for your item");
+      Alert.alert("Missing Information", "Please provide a name and image for your item.");
       return;
     }
 
     setIsLoading(true);
     
-    // All data is stored locally - no server upload needed
-    setTimeout(() => {
+    try {
+      let finalImageUri = imageUri;
+      
+      // If cloud sync is enabled and we have a user ID, upload image to cloud
+      if (isCloudSyncEnabled && userId) {
+        try {
+          console.log("Uploading image to cloud storage...");
+          finalImageUri = await uploadImageToCloud(imageUri, userId);
+          console.log("Image uploaded successfully:", finalImageUri);
+        } catch (error) {
+          console.error("Failed to upload image to cloud, using local URI:", error);
+          // Continue with local URI if cloud upload fails
+        }
+      }
+      
+      // Add item to store
       addItem({
         name: name.trim(),
-        imageUri,
+        imageUri: finalImageUri,
         categoryId: selectedCategoryId,
       });
       
-      setIsLoading(false);
       router.back();
-    }, 500);
+    } catch (error) {
+      console.error("Failed to save item:", error);
+      Alert.alert("Error", "Failed to save item. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -130,6 +152,11 @@ export default function AddItemScreen() {
         </Pressable>
 
         <Text style={styles.label}>IMAGE</Text>
+        {isCloudSyncEnabled && userId && (
+          <Text style={styles.cloudInfo}>
+            Images will be saved to your cloud storage for access across devices.
+          </Text>
+        )}
         {imageUri ? (
           <View style={styles.imagePreviewContainer}>
             <Image
@@ -228,6 +255,12 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: Colors.text,
     marginBottom: 8,
+  },
+  cloudInfo: {
+    fontSize: 12,
+    color: Colors.darkGray,
+    marginBottom: 8,
+    fontStyle: "italic",
   },
   input: {
     backgroundColor: Colors.lightGray,
