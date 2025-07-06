@@ -45,7 +45,7 @@ export default function CategoryScreen() {
     <View style={styles.container}>
       <Stack.Screen
         options={{
-          title: category?.name || "Category",
+          title: category?.name || "CATEGORY",
         }}
       />
 
@@ -65,10 +65,10 @@ export default function CategoryScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
-              No items in this category yet.
+              NO ITEMS IN THIS CATEGORY YET.
             </Text>
             <Pressable style={styles.addButton} onPress={handleAddItem}>
-              <Text style={styles.addButtonText}>Add Item</Text>
+              <Text style={styles.addButtonText}>ADD ITEM</Text>
             </Pressable>
           </View>
         }

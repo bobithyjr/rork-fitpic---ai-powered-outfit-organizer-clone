@@ -15,9 +15,9 @@ export default function SettingsScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Outfit Preferences</Text>
+        <Text style={styles.sectionTitle}>OUTFIT PREFERENCES</Text>
         <Text style={styles.sectionDescription}>
-          Choose which clothing categories to include in your outfit suggestions
+          CHOOSE WHICH CLOTHING CATEGORIES TO INCLUDE IN YOUR OUTFIT SUGGESTIONS
         </Text>
 
         {toggleableCategories.map((category) => (
@@ -25,7 +25,7 @@ export default function SettingsScreen() {
             <View>
               <Text style={styles.settingLabel}>{category.name}</Text>
               {category.optional && (
-                <Text style={styles.optionalLabel}>Optional</Text>
+                <Text style={styles.optionalLabel}>OPTIONAL</Text>
               )}
             </View>
             <Switch
@@ -38,18 +38,18 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About FitPic</Text>
+        <Text style={styles.sectionTitle}>ABOUT FITPIC</Text>
         <Text style={styles.aboutText}>
-          FitPic is your personal AI stylist that helps you create outfits from your own wardrobe.
-          Simply add your clothing items to your virtual closet, and let FitPic suggest stylish combinations.
-          All data is stored locally on your device - no accounts or internet required.
+          FITPIC IS YOUR PERSONAL AI STYLIST THAT HELPS YOU CREATE OUTFITS FROM YOUR OWN WARDROBE.
+          SIMPLY ADD YOUR CLOTHING ITEMS TO YOUR VIRTUAL CLOSET, AND LET FITPIC SUGGEST STYLISH COMBINATIONS.
+          ALL DATA IS STORED LOCALLY ON YOUR DEVICE - NO ACCOUNTS OR INTERNET REQUIRED.
         </Text>
-        <Text style={styles.versionText}>Version 1.0.0</Text>
+        <Text style={styles.versionText}>VERSION 1.0.0</Text>
       </View>
 
       <View style={styles.buttonContainer}>
         <Pressable style={styles.resetButton} onPress={resetToDefaults}>
-          <Text style={styles.resetButtonText}>Reset to Defaults</Text>
+          <Text style={styles.resetButtonText}>RESET TO DEFAULTS</Text>
         </Pressable>
       </View>
     </ScrollView>

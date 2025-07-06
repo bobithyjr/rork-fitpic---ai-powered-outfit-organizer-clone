@@ -96,23 +96,23 @@ export default function AddItemScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.label}>Item Name</Text>
+        <Text style={styles.label}>ITEM NAME</Text>
         <TextInput
           style={styles.input}
           value={name}
           onChangeText={setName}
-          placeholder={`Enter ${selectedCategory?.name || "item"} name`}
+          placeholder={`ENTER ${selectedCategory?.name || "ITEM"} NAME`}
           placeholderTextColor={Colors.darkGray}
         />
 
-        <Text style={styles.label}>Category</Text>
+        <Text style={styles.label}>CATEGORY</Text>
         <View style={styles.categoryContainer}>
           <Text style={styles.categoryText}>
-            {selectedCategory?.name || "Unknown"}
+            {selectedCategory?.name || "UNKNOWN"}
           </Text>
         </View>
 
-        <Text style={styles.label}>Image</Text>
+        <Text style={styles.label}>IMAGE</Text>
         {imageUri ? (
           <View style={styles.imagePreviewContainer}>
             <Image
@@ -131,10 +131,10 @@ export default function AddItemScreen() {
           <View style={styles.imagePickerContainer}>
             <Pressable style={styles.imagePickerButton} onPress={handleTakePhoto}>
               <Camera size={24} color={Colors.primary} />
-              <Text style={styles.imagePickerText}>Take Photo</Text>
+              <Text style={styles.imagePickerText}>TAKE PHOTO</Text>
             </Pressable>
             <Pressable style={styles.imagePickerButton} onPress={handlePickImage}>
-              <Text style={styles.imagePickerText}>Choose from Library</Text>
+              <Text style={styles.imagePickerText}>CHOOSE FROM LIBRARY</Text>
             </Pressable>
           </View>
         )}
@@ -149,11 +149,11 @@ export default function AddItemScreen() {
           {isLoading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={styles.saveButtonText}>Save Item</Text>
+            <Text style={styles.saveButtonText}>SAVE ITEM</Text>
           )}
         </Pressable>
         <Pressable style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
+          <Text style={styles.cancelButtonText}>CANCEL</Text>
         </Pressable>
       </View>
     </ScrollView>

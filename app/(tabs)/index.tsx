@@ -62,13 +62,13 @@ export default function HomeScreen() {
         {!hasItems ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
-              Add clothes to get started
+              ADD CLOTHES TO GET STARTED
             </Text>
             <Pressable
               style={styles.addButton}
               onPress={() => router.push("/closet")}
             >
-              <Text style={styles.addButtonText}>Go to Closet</Text>
+              <Text style={styles.addButtonText}>GO TO CLOSET</Text>
             </Pressable>
           </View>
         ) : (
@@ -91,14 +91,14 @@ export default function HomeScreen() {
           ) : (
             <>
               <Shuffle size={20} color="white" />
-              <Text style={styles.generateButtonText}>Pick My Fit</Text>
+              <Text style={styles.generateButtonText}>PICK MY FIT</Text>
             </>
           )}
         </Pressable>
 
         {Object.keys(currentOutfit).length > 0 && (
           <Pressable style={styles.saveButton} onPress={handleSaveOutfit}>
-            <Text style={styles.saveButtonText}>Save This Outfit</Text>
+            <Text style={styles.saveButtonText}>SAVE THIS OUTFIT</Text>
           </Pressable>
         )}
       </View>

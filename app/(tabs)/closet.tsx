@@ -56,12 +56,12 @@ export default function ClosetScreen() {
     if (item.id === "add") {
       return (
         <EmptyClothingItem
-          categoryName={`Add ${
+          categoryName={`ADD ${
             selectedCategory === "all"
-              ? "Item"
+              ? "ITEM"
               : selectedCategory === "accessories"
-              ? "Accessory"
-              : CLOSET_CATEGORIES.find((c) => c.id === selectedCategory)?.name || "Item"
+              ? "ACCESSORY"
+              : CLOSET_CATEGORIES.find((c) => c.id === selectedCategory)?.name || "ITEM"
           }`}
           onPress={handleAddItem}
         />
@@ -94,7 +94,7 @@ export default function ClosetScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
-              {selectedCategory === "all" ? "No items in your closet yet." : "No items in this category yet."}
+              {selectedCategory === "all" ? "NO ITEMS IN YOUR CLOSET YET." : "NO ITEMS IN THIS CATEGORY YET."}
             </Text>
           </View>
         }

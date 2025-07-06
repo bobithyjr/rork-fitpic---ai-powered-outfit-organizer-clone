@@ -30,7 +30,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="closet"
         options={{
-          title: "Your Closet",
+          title: "YOUR CLOSET",
           tabBarLabel: "YOUR CLOSET",
           tabBarIcon: ({ color }) => <ShoppingBag size={24} color={color} />,
         }}
@@ -38,7 +38,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "FitPic",
+          title: "FITPIC",
           tabBarLabel: "FITPICKER",
           tabBarIcon: ({ color }) => <Home size={24} color={color} />,
         }}
@@ -46,7 +46,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: "SETTINGS",
           tabBarLabel: "SETTINGS",
           tabBarIcon: ({ color }) => <Settings size={24} color={color} />,
         }}
