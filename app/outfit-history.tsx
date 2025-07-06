@@ -4,7 +4,7 @@ import { Stack, useRouter } from "expo-router";
 import { Trash2 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
-import OutfitGrid from "@/components/OutfitGrid";
+import CompactOutfitGrid from "@/components/CompactOutfitGrid";
 import { Outfit } from "@/types/clothing";
 
 export default function OutfitHistoryScreen() {
@@ -28,7 +28,7 @@ export default function OutfitHistoryScreen() {
         <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
       </View>
       <View style={styles.outfitPreview}>
-        <OutfitGrid
+        <CompactOutfitGrid
           outfit={item.items}
           enabledCategories={{}}
         />
@@ -83,23 +83,23 @@ const styles = StyleSheet.create({
   outfitCard: {
     backgroundColor: Colors.lightGray,
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    padding: 12,
+    marginBottom: 12,
     overflow: 'hidden',
   },
   outfitHeader: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   dateText: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "600",
     color: Colors.text,
     textAlign: "center",
   },
   outfitPreview: {
-    height: 200,
-    transform: [{ scale: 0.7 }],
+    height: 140,
     alignSelf: 'center',
+    overflow: 'hidden',
   },
   emptyState: {
     padding: 24,
