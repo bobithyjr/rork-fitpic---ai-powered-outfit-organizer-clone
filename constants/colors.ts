@@ -1,11 +1,11 @@
 export default {
-  primary: "#86949f", // Blue-gray
-  secondary: "#F59E0B", // Amber
+  primary: "#000000", // Black
+  secondary: "#333333", // Dark gray
   background: "#FFFFFF",
-  text: "#1F2937",
-  lightGray: "#F3F4F6",
-  mediumGray: "#E5E7EB",
-  darkGray: "#9CA3AF",
-  success: "#10B981",
-  error: "#EF4444",
+  text: "#000000",
+  lightGray: "#F8F9FA",
+  mediumGray: "#E9ECEF",
+  darkGray: "#6C757D",
+  success: "#28A745",
+  error: "#DC3545",
 };
