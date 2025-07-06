@@ -172,11 +172,6 @@ export default function FavoriteOutfitsScreen() {
       <Stack.Screen
         options={{
           title: "FAVORITE OUTFITS",
-          headerRight: () => (
-            <Pressable onPress={handleClearAllFavorites} style={styles.clearButton}>
-              <Trash2 size={20} color={Colors.error} />
-            </Pressable>
-          ),
         }}
       />
 
@@ -213,9 +208,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  clearButton: {
-    padding: 8,
-  },
+
   listContent: {
     padding: 16,
   },
