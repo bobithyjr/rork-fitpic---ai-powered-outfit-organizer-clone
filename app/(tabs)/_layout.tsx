@@ -39,7 +39,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "FITPIC",
-          tabBarLabel: "FITPICKER",
+          tabBarLabel: "FITPIC",
           tabBarIcon: ({ color }) => <Home size={24} color={color} />,
         }}
       />
