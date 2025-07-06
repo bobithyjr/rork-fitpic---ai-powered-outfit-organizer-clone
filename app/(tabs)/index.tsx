@@ -110,7 +110,7 @@ export default function HomeScreen() {
             </Pressable>
             
             <Pressable style={styles.actionButton} onPress={handleSaveOutfit}>
-              <Text style={styles.actionButtonText}>SAVE TO FAVORITES</Text>
+              <Text style={styles.actionButtonText}>SAVE OUTFIT</Text>
             </Pressable>
             
             <Pressable style={styles.actionButton} onPress={handleFavoriteOutfits}>
