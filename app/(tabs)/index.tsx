@@ -116,10 +116,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 48,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "600",
     color: Colors.text,
-    letterSpacing: 2,
+    letterSpacing: 1,
   },
   outfitContainer: {
     flex: 1,
