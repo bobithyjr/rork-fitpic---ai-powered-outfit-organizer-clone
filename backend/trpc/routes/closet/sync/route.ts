@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { publicProcedure } from "../../create-context";
+import { publicProcedure } from "../../../create-context";
 
 // Define the schema for clothing items and outfits
 const ClothingItemSchema = z.object({

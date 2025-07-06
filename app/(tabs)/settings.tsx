@@ -529,4 +529,36 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
+  appleSignInContainer: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: Colors.lightGray,
+    borderRadius: 8,
+  },
+  appleSignInDescription: {
+    fontSize: 14,
+    color: Colors.text,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  appleSignInButton: {
+    width: "100%",
+    height: 44,
+  },
+  signOutContainer: {
+    marginTop: 16,
+  },
+  signOutButton: {
+    backgroundColor: Colors.background,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.error,
+  },
+  signOutButtonText: {
+    color: Colors.error,
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
