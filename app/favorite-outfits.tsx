@@ -33,6 +33,26 @@ export default function FavoriteOutfitsScreen() {
     return outfit.name || formatDate(outfit.createdAt);
   };
 
+  const handleClearAllFavorites = () => {
+    Alert.alert(
+      "Clear All Favorites",
+      "Are you sure you want to delete all favorite outfits?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Clear All", 
+          style: "destructive", 
+          onPress: () => {
+            savedOutfits.forEach(outfit => {
+              removeSavedOutfit(outfit.id);
+            });
+            setRefreshKey(prev => prev + 1);
+          }
+        },
+      ]
+    );
+  };
+
   const handleRemoveOutfit = (outfitId: string) => {
     console.log('handleRemoveOutfit called with ID:', outfitId);
     
@@ -152,6 +172,11 @@ export default function FavoriteOutfitsScreen() {
       <Stack.Screen
         options={{
           title: "FAVORITE OUTFITS",
+          headerRight: () => (
+            <Pressable onPress={handleClearAllFavorites} style={styles.clearButton}>
+              <Trash2 size={20} color={Colors.error} />
+            </Pressable>
+          ),
         }}
       />
 
@@ -187,6 +212,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  clearButton: {
+    padding: 8,
   },
   listContent: {
     padding: 16,
