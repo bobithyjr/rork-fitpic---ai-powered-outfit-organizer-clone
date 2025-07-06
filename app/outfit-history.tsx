@@ -85,18 +85,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    overflow: 'hidden',
   },
   outfitHeader: {
     marginBottom: 12,
   },
   dateText: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "700",
     color: Colors.text,
     textAlign: "center",
   },
   outfitPreview: {
-    height: 300,
+    height: 200,
+    transform: [{ scale: 0.7 }],
+    alignSelf: 'center',
   },
   emptyState: {
     padding: 24,

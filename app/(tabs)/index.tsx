@@ -197,14 +197,16 @@ const styles = StyleSheet.create({
   },
   sideButton: {
     flex: 1,
-    backgroundColor: Colors.lightGray,
+    backgroundColor: Colors.background,
     paddingVertical: 12,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.primary,
   },
   sideButtonText: {
-    color: Colors.text,
+    color: Colors.primary,
     fontSize: 12,
     fontWeight: "600",
     textAlign: "center",
