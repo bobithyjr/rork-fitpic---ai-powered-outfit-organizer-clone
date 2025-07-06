@@ -1,15 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View, Text, FlatList, Pressable } from "react-native";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import { Trash2 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
-import CompactOutfitGrid from "@/components/CompactOutfitGrid";
 import { Outfit } from "@/types/clothing";
+import OutfitModal from "./outfit-modal";
 
 export default function OutfitHistoryScreen() {
-  const router = useRouter();
   const { outfitHistory, clearHistory } = useClosetStore();
+  const [selectedOutfit, setSelectedOutfit] = useState<Outfit | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -22,18 +23,23 @@ export default function OutfitHistoryScreen() {
     });
   };
 
+  const handleViewOutfit = (outfit: Outfit) => {
+    setSelectedOutfit(outfit);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedOutfit(null);
+  };
+
   const renderOutfit = ({ item }: { item: Outfit }) => (
-    <View style={styles.outfitCard}>
-      <View style={styles.outfitHeader}>
-        <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
-      </View>
-      <View style={styles.outfitPreview}>
-        <CompactOutfitGrid
-          outfit={item.items}
-          enabledCategories={{}}
-        />
-      </View>
-    </View>
+    <Pressable
+      onPress={() => handleViewOutfit(item)}
+      style={styles.outfitCard}
+    >
+      <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
+    </Pressable>
   );
 
   return (
@@ -65,6 +71,13 @@ export default function OutfitHistoryScreen() {
           </View>
         }
       />
+
+      <OutfitModal
+        visible={modalVisible}
+        outfit={selectedOutfit}
+        onClose={handleCloseModal}
+        title="OUTFIT HISTORY"
+      />
     </View>
   );
 }
@@ -83,23 +96,16 @@ const styles = StyleSheet.create({
   outfitCard: {
     backgroundColor: Colors.lightGray,
     borderRadius: 12,
-    padding: 12,
+    padding: 20,
     marginBottom: 12,
-    overflow: 'hidden',
-  },
-  outfitHeader: {
-    marginBottom: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   dateText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
     color: Colors.text,
     textAlign: "center",
-  },
-  outfitPreview: {
-    height: 140,
-    alignSelf: 'center',
-    overflow: 'hidden',
   },
   emptyState: {
     padding: 24,

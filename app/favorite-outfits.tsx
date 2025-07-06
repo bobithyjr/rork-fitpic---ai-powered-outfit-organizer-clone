@@ -1,14 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View, Text, FlatList, Pressable } from "react-native";
 import { Stack } from "expo-router";
 import { Trash2 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
-import CompactOutfitGrid from "@/components/CompactOutfitGrid";
 import { Outfit } from "@/types/clothing";
+import OutfitModal from "./outfit-modal";
 
 export default function FavoriteOutfitsScreen() {
   const { savedOutfits, removeSavedOutfit } = useClosetStore();
+  const [selectedOutfit, setSelectedOutfit] = useState<Outfit | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -25,23 +27,30 @@ export default function FavoriteOutfitsScreen() {
     removeSavedOutfit(outfitId);
   };
 
+  const handleViewOutfit = (outfit: Outfit) => {
+    setSelectedOutfit(outfit);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedOutfit(null);
+  };
+
   const renderOutfit = ({ item }: { item: Outfit }) => (
     <View style={styles.outfitCard}>
-      <View style={styles.outfitHeader}>
+      <Pressable
+        onPress={() => handleViewOutfit(item)}
+        style={styles.outfitButton}
+      >
         <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
-        <Pressable
-          onPress={() => handleRemoveOutfit(item.id)}
-          style={styles.removeButton}
-        >
-          <Trash2 size={16} color={Colors.error} />
-        </Pressable>
-      </View>
-      <View style={styles.outfitPreview}>
-        <CompactOutfitGrid
-          outfit={item.items}
-          enabledCategories={{}}
-        />
-      </View>
+      </Pressable>
+      <Pressable
+        onPress={() => handleRemoveOutfit(item.id)}
+        style={styles.removeButton}
+      >
+        <Trash2 size={18} color={Colors.error} />
+      </Pressable>
     </View>
   );
 
@@ -69,6 +78,13 @@ export default function FavoriteOutfitsScreen() {
           </View>
         }
       />
+
+      <OutfitModal
+        visible={modalVisible}
+        outfit={selectedOutfit}
+        onClose={handleCloseModal}
+        title="FAVORITE OUTFIT"
+      />
     </View>
   );
 }
@@ -82,30 +98,24 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   outfitCard: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.lightGray,
     borderRadius: 12,
-    padding: 12,
     marginBottom: 12,
     overflow: 'hidden',
   },
-  outfitHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
+  outfitButton: {
+    flex: 1,
+    padding: 20,
   },
   dateText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
     color: Colors.text,
   },
   removeButton: {
-    padding: 4,
-  },
-  outfitPreview: {
-    height: 140,
-    alignSelf: 'center',
-    overflow: 'hidden',
+    padding: 16,
   },
   emptyState: {
     padding: 24,
