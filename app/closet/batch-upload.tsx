@@ -12,7 +12,7 @@ import {
 import { useRouter, Stack } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
-import { Upload, X, Check, Edit3, Trash2 } from "lucide-react-native";
+import { Upload, X, Check, Edit3, Trash2, AlertTriangle } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
 import { CLOTHING_CATEGORIES } from "@/constants/categories";
@@ -24,6 +24,7 @@ interface BatchItem {
   categoryId: string;
   isProcessing: boolean;
   isEditing: boolean;
+  aiProcessingFailed: boolean;
 }
 
 export default function BatchUploadScreen() {
@@ -60,6 +61,7 @@ export default function BatchUploadScreen() {
         categoryId: "shirts", // Default category
         isProcessing: true,
         isEditing: false,
+        aiProcessingFailed: false,
       }));
 
       setItems(newItems);
@@ -72,6 +74,7 @@ export default function BatchUploadScreen() {
 
     for (let i = 0; i < itemsToProcess.length; i++) {
       const item = itemsToProcess[i];
+      let processingFailed = false;
       
       try {
         // Convert image to base64
@@ -120,7 +123,13 @@ Name guidelines:
 - Use 1-3 words maximum
 - Include color if obvious (Blue Jeans, Red Shirt)
 - Be descriptive but concise (Black Sneakers, Denim Jacket)
-- Focus on the main characteristics`
+- Focus on the main characteristics
+
+If you cannot clearly identify the clothing item or are unsure, respond with:
+{
+  "category": "unknown",
+  "name": "Unknown Item"
+}`
               },
               {
                 role: 'user',
@@ -154,10 +163,20 @@ Name guidelines:
               throw new Error('No JSON found in AI response');
             }
 
+            // Check if AI couldn't identify the item
+            if (aiData.category === "unknown" || aiData.name === "Unknown Item") {
+              processingFailed = true;
+            }
+
             // Validate category exists
             const validCategory = selectableCategories.find(c => c.id === aiData.category);
             const finalCategory = validCategory ? aiData.category : 'shirts';
             const finalName = aiData.name || 'Clothing Item';
+
+            // If category wasn't valid, mark as failed
+            if (!validCategory && aiData.category !== "unknown") {
+              processingFailed = true;
+            }
 
             // Update the item
             setItems(prevItems => 
@@ -165,9 +184,10 @@ Name guidelines:
                 prevItem.id === item.id 
                   ? { 
                       ...prevItem, 
-                      name: finalName,
-                      categoryId: finalCategory,
-                      isProcessing: false 
+                      name: processingFailed ? 'Please name this item' : finalName,
+                      categoryId: processingFailed ? 'shirts' : finalCategory,
+                      isProcessing: false,
+                      aiProcessingFailed: processingFailed
                     }
                   : prevItem
               )
@@ -175,15 +195,17 @@ Name guidelines:
 
           } catch (parseError) {
             console.error('Failed to parse AI response for item:', item.id, parseError);
-            // Fallback to default values
+            processingFailed = true;
+            // Fallback to default values with failed flag
             setItems(prevItems => 
               prevItems.map(prevItem => 
                 prevItem.id === item.id 
                   ? { 
                       ...prevItem, 
-                      name: 'Clothing Item',
+                      name: 'Please name this item',
                       categoryId: 'shirts',
-                      isProcessing: false 
+                      isProcessing: false,
+                      aiProcessingFailed: true
                     }
                   : prevItem
               )
@@ -195,15 +217,17 @@ Name guidelines:
 
       } catch (error) {
         console.error('Failed to process image with AI:', error);
-        // Fallback to default values
+        processingFailed = true;
+        // Fallback to default values with failed flag
         setItems(prevItems => 
           prevItems.map(prevItem => 
             prevItem.id === item.id 
               ? { 
                   ...prevItem, 
-                  name: 'Clothing Item',
+                  name: 'Please name this item',
                   categoryId: 'shirts',
-                  isProcessing: false 
+                  isProcessing: false,
+                  aiProcessingFailed: true
                 }
               : prevItem
           )
@@ -235,7 +259,7 @@ Name guidelines:
     setItems(prevItems => 
       prevItems.map(item => 
         item.id === itemId 
-          ? { ...item, name: newName, categoryId: newCategory, isEditing: false }
+          ? { ...item, name: newName, categoryId: newCategory, isEditing: false, aiProcessingFailed: false }
           : item
       )
     );
@@ -252,7 +276,16 @@ Name guidelines:
   };
 
   const handleSaveAll = async () => {
-    const validItems = items.filter(item => !item.isProcessing && item.name.trim());
+    const validItems = items.filter(item => !item.isProcessing && item.name.trim() && item.name !== 'Please name this item');
+    const invalidItems = items.filter(item => !item.isProcessing && (item.name === 'Please name this item' || !item.name.trim()));
+    
+    if (invalidItems.length > 0) {
+      Alert.alert(
+        "Items Need Names", 
+        `${invalidItems.length} items need to be named and categorized manually. Please edit them before saving.`
+      );
+      return;
+    }
     
     if (validItems.length === 0) {
       Alert.alert("No Items", "No valid items to save. Please wait for processing to complete or add some items.");
@@ -300,7 +333,8 @@ Name guidelines:
   };
 
   const processingCount = items.filter(item => item.isProcessing).length;
-  const readyCount = items.filter(item => !item.isProcessing).length;
+  const readyCount = items.filter(item => !item.isProcessing && item.name !== 'Please name this item' && item.name.trim()).length;
+  const failedCount = items.filter(item => item.aiProcessingFailed && !item.isEditing).length;
 
   return (
     <View style={styles.container}>
@@ -333,7 +367,7 @@ Name guidelines:
               <Text style={styles.statusText}>
                 {processingCount > 0 
                   ? `Processing ${processingCount} items...`
-                  : `${readyCount} items ready`
+                  : `${readyCount} ready${failedCount > 0 ? `, ${failedCount} need manual input` : ''}`
                 }
               </Text>
               {processingCount === 0 && (
@@ -342,6 +376,15 @@ Name guidelines:
                 </Pressable>
               )}
             </View>
+
+            {failedCount > 0 && (
+              <View style={styles.warningBanner}>
+                <AlertTriangle size={16} color={Colors.error} />
+                <Text style={styles.warningText}>
+                  Some items couldn't be identified by AI. Please name and categorize them manually.
+                </Text>
+              </View>
+            )}
 
             <View style={styles.itemsList}>
               {items.map((item) => (
@@ -365,10 +408,10 @@ Name guidelines:
           <Pressable
             style={[
               styles.saveAllButton,
-              (processingCount > 0 || isSaving) && styles.disabledButton
+              (processingCount > 0 || isSaving || failedCount > 0) && styles.disabledButton
             ]}
             onPress={handleSaveAll}
-            disabled={processingCount > 0 || isSaving}
+            disabled={processingCount > 0 || isSaving || failedCount > 0}
           >
             {isSaving ? (
               <ActivityIndicator color="white" />
@@ -411,7 +454,10 @@ function BatchItemCard({
   const selectedCategory = categories.find(c => c.id === item.categoryId);
 
   return (
-    <View style={styles.itemCard}>
+    <View style={[
+      styles.itemCard,
+      item.aiProcessingFailed && !item.isEditing && styles.failedItemCard
+    ]}>
       <Image source={{ uri: item.imageUri }} style={styles.itemImage} contentFit="cover" />
       
       <View style={styles.itemContent}>
@@ -464,8 +510,23 @@ function BatchItemCard({
           </View>
         ) : (
           <View style={styles.itemInfo}>
-            <Text style={styles.itemName}>{item.name}</Text>
+            <View style={styles.itemNameRow}>
+              <Text style={[
+                styles.itemName,
+                item.aiProcessingFailed && styles.failedItemName
+              ]}>
+                {item.name}
+              </Text>
+              {item.aiProcessingFailed && (
+                <AlertTriangle size={14} color={Colors.error} />
+              )}
+            </View>
             <Text style={styles.itemCategory}>{selectedCategory?.name}</Text>
+            {item.aiProcessingFailed && (
+              <Text style={styles.failedItemHelper}>
+                AI couldn't identify this item
+              </Text>
+            )}
           </View>
         )}
       </View>
@@ -557,6 +618,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  warningBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFF3CD",
+    borderColor: "#FFEAA7",
+    borderWidth: 1,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 8,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#856404",
+    fontWeight: "500",
+  },
   itemsList: {
     padding: 16,
     gap: 12,
@@ -568,6 +647,11 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: "center",
     gap: 12,
+  },
+  failedItemCard: {
+    borderWidth: 2,
+    borderColor: Colors.error,
+    backgroundColor: "#FFF5F5",
   },
   itemImage: {
     width: 60,
@@ -642,15 +726,30 @@ const styles = StyleSheet.create({
   itemInfo: {
     gap: 2,
   },
+  itemNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
   itemName: {
     fontSize: 16,
     fontWeight: "600",
     color: Colors.text,
   },
+  failedItemName: {
+    color: Colors.error,
+    fontStyle: "italic",
+  },
   itemCategory: {
     fontSize: 12,
     color: Colors.darkGray,
     textTransform: "uppercase",
+  },
+  failedItemHelper: {
+    fontSize: 11,
+    color: Colors.error,
+    fontStyle: "italic",
+    marginTop: 2,
   },
   itemActions: {
     flexDirection: "row",
