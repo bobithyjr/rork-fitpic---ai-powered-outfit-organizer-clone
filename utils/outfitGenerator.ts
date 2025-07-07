@@ -50,11 +50,39 @@ const isOutfitTooSimilar = (newOutfit: Record<string, ClothingItem | null>, outf
   });
 };
 
+// Debug function to validate item categorization
+const validateItemCategorization = (items: ClothingItem[]) => {
+  const categoryCounts: Record<string, number> = {};
+  const misplacedItems: ClothingItem[] = [];
+  
+  items.forEach(item => {
+    categoryCounts[item.categoryId] = (categoryCounts[item.categoryId] || 0) + 1;
+    
+    // Check for common misplacements
+    const itemNameLower = item.name.toLowerCase();
+    if (item.categoryId === 'belts' && (itemNameLower.includes('jean') || itemNameLower.includes('pant') || itemNameLower.includes('trouser'))) {
+      misplacedItems.push(item);
+    }
+    if (item.categoryId === 'jackets' && (itemNameLower.includes('shoe') || itemNameLower.includes('sneaker') || itemNameLower.includes('boot'))) {
+      misplacedItems.push(item);
+    }
+  });
+  
+  if (misplacedItems.length > 0) {
+    console.warn('🚨 Potentially misplaced items detected:', misplacedItems.map(item => `${item.name} (in ${item.categoryId})`));
+  }
+  
+  console.log('📊 Item distribution by category:', categoryCounts);
+};
+
 export async function generateOutfit(
   items: ClothingItem[],
   enabledCategories: Record<string, boolean>,
   outfitHistory: Outfit[] = []
 ): Promise<Record<string, ClothingItem | null>> {
+  // Debug: Validate item categorization
+  validateItemCategorization(items);
+  
   // Filter items by enabled categories
   const availableItems = items.filter(
     (item) => enabledCategories[item.categoryId] ?? true
@@ -119,15 +147,34 @@ export async function generateOutfit(
           selectedItem = categoryItems[randomIndex];
         }
         
-        outfit[category.id] = selectedItem;
+        // Final validation: only place item if it actually belongs to this category
+        if (selectedItem.categoryId === category.id) {
+          outfit[category.id] = selectedItem;
+        } else {
+          console.warn(`⚠️ Attempted to place ${selectedItem.name} (${selectedItem.categoryId}) in ${category.id} category. Skipping invalid placement.`);
+        }
       }
     });
 
+    // Final validation: ensure no items are in wrong categories
+    const validatedOutfit: Record<string, ClothingItem | null> = {};
+    CLOTHING_CATEGORIES.forEach((category) => {
+      const item = outfit[category.id];
+      if (item && item.categoryId === category.id) {
+        validatedOutfit[category.id] = item;
+      } else {
+        validatedOutfit[category.id] = null;
+        if (item) {
+          console.warn(`🚨 Removed misplaced item: ${item.name} (${item.categoryId}) from ${category.id} slot`);
+        }
+      }
+    });
+    
     // Check if this outfit is too similar to recent ones
-    if (!isOutfitTooSimilar(outfit, outfitHistory, 0.6)) {
+    if (!isOutfitTooSimilar(validatedOutfit, outfitHistory, 0.6)) {
       // Simulate processing time
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      return outfit;
+      return validatedOutfit;
     }
     
     attempts++;
@@ -150,14 +197,32 @@ export async function generateOutfit(
     const shouldPickItem = isRequired || Math.random() < 0.7;
     
     if (categoryItems.length > 0 && shouldPickItem) {
-      const randomIndex = Math.floor(Math.random() * categoryItems.length);
-      outfit[category.id] = categoryItems[randomIndex];
+      // Double-check that items actually belong to this category
+      const validCategoryItems = categoryItems.filter(item => item.categoryId === category.id);
+      if (validCategoryItems.length > 0) {
+        const randomIndex = Math.floor(Math.random() * validCategoryItems.length);
+        outfit[category.id] = validCategoryItems[randomIndex];
+      }
     }
   });
 
+  // Final validation: ensure no items are in wrong categories
+  const validatedOutfit: Record<string, ClothingItem | null> = {};
+  CLOTHING_CATEGORIES.forEach((category) => {
+    const item = outfit[category.id];
+    if (item && item.categoryId === category.id) {
+      validatedOutfit[category.id] = item;
+    } else {
+      validatedOutfit[category.id] = null;
+      if (item) {
+        console.warn(`🚨 Removed misplaced item: ${item.name} (${item.categoryId}) from ${category.id} slot`);
+      }
+    }
+  });
+  
   // Simulate processing time
   await new Promise((resolve) => setTimeout(resolve, 1000));
-  return outfit;
+  return validatedOutfit;
 }
 
 export async function generateAIOutfit(
@@ -216,13 +281,20 @@ ${recentOutfitContext ? `Recent outfit history (AVOID creating similar combinati
 ${recentOutfitContext}` : ''}
 
 Available categories and their requirements:
-- shirts: REQUIRED (core piece)
-- pants: REQUIRED (core piece) 
-- shoes: REQUIRED (core piece)
-- belts: REQUIRED (essential accessory)
-- hats: OPTIONAL (add if it enhances the look)
-- jackets: OPTIONAL (add for layering or style)
-- accessories: OPTIONAL (add for personality and flair)
+- shirts: REQUIRED (core piece) - ONLY select items with category "shirts"
+- pants: REQUIRED (core piece) - ONLY select items with category "pants" 
+- shoes: REQUIRED (core piece) - ONLY select items with category "shoes"
+- belts: REQUIRED (essential accessory) - ONLY select items with category "belts"
+- hats: OPTIONAL (add if it enhances the look) - ONLY select items with category "hats"
+- jackets: OPTIONAL (add for layering or style) - ONLY select items with category "jackets"
+- accessories: OPTIONAL (add for personality and flair) - ONLY select items with category "accessories"
+
+CRITICAL RULE: You MUST only select items for their correct category. For example:
+- NEVER put jeans (pants category) in the belts section
+- NEVER put shoes in the coats/jackets section  
+- NEVER put shirts in the pants section
+- Each item can ONLY go in its designated category slot
+- If an item's category doesn't match the slot, DO NOT select it
 
 Fashion guidelines to follow:
 1. COLOR HARMONY: Create pleasing color combinations using:
@@ -259,6 +331,8 @@ Fashion guidelines to follow:
 6. CURRENT TRENDS: Incorporate modern fashion sensibilities while maintaining timeless appeal
 
 IMPORTANT: Put real thought into each selection. Avoid random combinations. Each outfit should tell a cohesive style story and be something someone would genuinely want to wear and feel confident in. PRIORITIZE creating variety by using different items than those recently worn.
+
+CATEGORY VALIDATION: Before selecting any item, verify that the item's "category" field exactly matches the category slot you're placing it in. This is absolutely critical for proper outfit display.
 
 Please select ONE item from each category (if available) to create the best possible outfit. Return your response as a JSON object with this exact structure:
 
@@ -324,7 +398,7 @@ Only include item IDs that exist in the provided list. Use null for categories w
         return await generateOutfit(items, enabledCategories, outfitHistory);
       }
 
-      // Convert AI selection to our outfit format
+      // Convert AI selection to our outfit format with strict category validation
       const finalOutfit: Record<string, ClothingItem | null> = {};
       
       CLOTHING_CATEGORIES.forEach((category) => {
@@ -337,8 +411,11 @@ Only include item IDs that exist in the provided list. Use null for categories w
         const selectedItemId = aiOutfit.outfit?.[category.id];
         if (selectedItemId && selectedItemId !== 'null') {
           const selectedItem = availableItems.find(item => item.id === selectedItemId);
-          if (selectedItem) {
+          // CRITICAL: Only place item if it actually belongs to this category
+          if (selectedItem && selectedItem.categoryId === category.id) {
             finalOutfit[category.id] = selectedItem;
+          } else if (selectedItem) {
+            console.warn(`⚠️ AI tried to place ${selectedItem.name} (${selectedItem.categoryId}) in ${category.id} category. Ignoring invalid placement.`);
           }
         }
       });
@@ -346,22 +423,41 @@ Only include item IDs that exist in the provided list. Use null for categories w
       // Check if this AI-generated outfit is sufficiently different
       if (!isOutfitTooSimilar(finalOutfit, outfitHistory, 0.5)) {
         // Ensure we have at least the required items, fall back to random if AI didn't select them
+        // But ONLY select items that actually belong to the target category
         const requiredCategories = ['shirts', 'pants', 'shoes', 'belts'];
         requiredCategories.forEach(categoryId => {
           if (enabledCategories[categoryId] && !finalOutfit[categoryId] && itemsByCategory[categoryId]?.length > 0) {
-            const randomIndex = Math.floor(Math.random() * itemsByCategory[categoryId].length);
-            finalOutfit[categoryId] = itemsByCategory[categoryId][randomIndex];
+            // Double-check that items in this category actually belong to this category
+            const validCategoryItems = itemsByCategory[categoryId].filter(item => item.categoryId === categoryId);
+            if (validCategoryItems.length > 0) {
+              const randomIndex = Math.floor(Math.random() * validCategoryItems.length);
+              finalOutfit[categoryId] = validCategoryItems[randomIndex];
+            }
           }
         });
 
+        // Final validation for AI outfit
+        const validatedAIOutfit: Record<string, ClothingItem | null> = {};
+        CLOTHING_CATEGORIES.forEach((category) => {
+          const item = finalOutfit[category.id];
+          if (item && item.categoryId === category.id) {
+            validatedAIOutfit[category.id] = item;
+          } else {
+            validatedAIOutfit[category.id] = null;
+            if (item) {
+              console.warn(`🚨 AI placed item incorrectly: ${item.name} (${item.categoryId}) in ${category.id} slot. Removed.`);
+            }
+          }
+        });
+        
         console.log('✨ AI Outfit Generated Successfully with Variety!');
         console.log('🎨 AI Reasoning:', aiOutfit.reasoning);
-        console.log('👔 Selected Items:', Object.entries(finalOutfit)
+        console.log('👔 Selected Items:', Object.entries(validatedAIOutfit)
           .filter(([_, item]) => item !== null)
           .map(([category, item]) => `${category}: ${item?.name}`)
           .join(', '));
         
-        return finalOutfit;
+        return validatedAIOutfit;
       }
       
       attempts++;
