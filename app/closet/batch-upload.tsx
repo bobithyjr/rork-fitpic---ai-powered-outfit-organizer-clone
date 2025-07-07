@@ -110,14 +110,22 @@ Return ONLY a JSON object in this exact format:
   "name": "Short Name"
 }
 
-Category guidelines:
-- hats: any headwear (caps, beanies, hats)
-- shirts: t-shirts, button-ups, blouses, tops, sweaters
-- jackets: coats, blazers, hoodies, cardigans, outerwear
-- accessories: jewelry, watches, bags, scarves, ties
-- pants: jeans, trousers, shorts, leggings, skirts
-- belts: any type of belt
-- shoes: sneakers, boots, sandals, heels, any footwear
+STRICT Category guidelines - BE VERY SPECIFIC:
+- hats: ONLY headwear like caps, beanies, hats, helmets
+- shirts: ONLY tops like t-shirts, button-ups, blouses, tank tops, sweaters, hoodies (upper body clothing)
+- jackets: ONLY outerwear like coats, blazers, cardigans, windbreakers (worn over other clothes)
+- accessories: ONLY jewelry, watches, bags, purses, scarves, ties, sunglasses
+- pants: ONLY lower body clothing like jeans, trousers, shorts, leggings, skirts, dresses
+- belts: ONLY waist belts, nothing else
+- shoes: ONLY footwear like sneakers, boots, sandals, heels, slippers, any type of shoe
+
+CRITICAL RULES:
+- If it goes on feet = shoes (never belts or accessories)
+- If it goes on legs/waist = pants (never belts unless it's specifically a belt)
+- If it's worn around waist to hold pants = belts
+- If it's upper body clothing = shirts or jackets
+- If it's headwear = hats
+- If it's jewelry/bags/small items = accessories
 
 Name guidelines:
 - Use 1-3 words maximum
@@ -168,10 +176,42 @@ If you cannot clearly identify the clothing item or are unsure, respond with:
               processingFailed = true;
             }
 
-            // Validate category exists
+            // Validate category exists and makes sense
             const validCategory = selectableCategories.find(c => c.id === aiData.category);
-            const finalCategory = validCategory ? aiData.category : 'shirts';
-            const finalName = aiData.name || 'Clothing Item';
+            let finalCategory = validCategory ? aiData.category : 'shirts';
+            let finalName = aiData.name || 'Clothing Item';
+
+            // Additional validation to catch common mistakes
+            const itemNameLower = finalName.toLowerCase();
+            const categoryId = aiData.category;
+            
+            // Check for obvious mismatches and correct them
+            if (itemNameLower.includes('shoe') || itemNameLower.includes('sneaker') || 
+                itemNameLower.includes('boot') || itemNameLower.includes('sandal') || 
+                itemNameLower.includes('heel') || itemNameLower.includes('slipper')) {
+              if (categoryId !== 'shoes') {
+                finalCategory = 'shoes';
+                console.log(`Corrected category from ${categoryId} to shoes for: ${finalName}`);
+              }
+            } else if (itemNameLower.includes('pant') || itemNameLower.includes('jean') || 
+                      itemNameLower.includes('short') || itemNameLower.includes('skirt') || 
+                      itemNameLower.includes('trouser') || itemNameLower.includes('legging')) {
+              if (categoryId !== 'pants') {
+                finalCategory = 'pants';
+                console.log(`Corrected category from ${categoryId} to pants for: ${finalName}`);
+              }
+            } else if (itemNameLower.includes('belt')) {
+              if (categoryId !== 'belts') {
+                finalCategory = 'belts';
+                console.log(`Corrected category from ${categoryId} to belts for: ${finalName}`);
+              }
+            } else if (itemNameLower.includes('hat') || itemNameLower.includes('cap') || 
+                      itemNameLower.includes('beanie')) {
+              if (categoryId !== 'hats') {
+                finalCategory = 'hats';
+                console.log(`Corrected category from ${categoryId} to hats for: ${finalName}`);
+              }
+            }
 
             // If category wasn't valid, mark as failed
             if (!validCategory && aiData.category !== "unknown") {
