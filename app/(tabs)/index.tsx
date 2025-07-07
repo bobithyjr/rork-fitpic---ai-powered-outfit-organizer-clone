@@ -13,7 +13,7 @@ import { ClothingItem } from "@/types/clothing";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { items, saveOutfit, addToHistory } = useClosetStore();
+  const { items, saveOutfit, addToHistory, outfitHistory } = useClosetStore();
   const { enabledCategories } = useSettingsStore();
   const [currentOutfit, setCurrentOutfit] = useState<Record<string, ClothingItem | null>>({});
   const [isGenerating, setIsGenerating] = useState(false);
@@ -25,7 +25,8 @@ export default function HomeScreen() {
     
     setIsGenerating(true);
     try {
-      const outfit = await generateAIOutfit(items, enabledCategories);
+      // Pass outfit history to ensure variety
+      const outfit = await generateAIOutfit(items, enabledCategories, outfitHistory);
       setCurrentOutfit(outfit);
       
       // Add to history automatically when outfit is generated
