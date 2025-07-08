@@ -85,7 +85,7 @@ export default function HomeScreen() {
             <View style={styles.themeContainer}>
               <TextInput
                 style={styles.themeInput}
-                placeholder="type theme here"
+                placeholder="TYPE THEME HERE"
                 placeholderTextColor={Colors.darkGray}
                 value={theme}
                 onChangeText={setTheme}
