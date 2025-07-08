@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
   outfitContainer: {
     flex: 1,
     justifyContent: "center",
+    paddingTop: 20,
   },
   emptyState: {
     padding: 24,
@@ -212,7 +213,8 @@ const styles = StyleSheet.create({
   },
   themeContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingBottom: 24,
+    paddingTop: 8,
   },
   themeInput: {
     backgroundColor: Colors.lightGray,
@@ -223,5 +225,6 @@ const styles = StyleSheet.create({
     color: Colors.text,
     borderWidth: 1,
     borderColor: Colors.border,
+    textAlign: "center",
   },
 });
