@@ -35,9 +35,6 @@ export default function AddItemScreen() {
   const [removeBackgroundEnabled, setRemoveBackgroundEnabled] = useState(true);
   const [isProcessingBackground, setIsProcessingBackground] = useState(false);
   const [originalImageUri, setOriginalImageUri] = useState<string | null>(null);
-  const [removeBackgroundEnabled, setRemoveBackgroundEnabled] = useState(true);
-  const [isProcessingBackground, setIsProcessingBackground] = useState(false);
-  const [originalImageUri, setOriginalImageUri] = useState<string | null>(null);
 
   // Filter out categories that shouldn't be selectable for adding items
   const selectableCategories = CLOTHING_CATEGORIES.filter(
