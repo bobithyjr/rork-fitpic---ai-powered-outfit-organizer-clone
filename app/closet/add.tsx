@@ -10,14 +10,16 @@ import {
   Platform,
   Modal,
   Alert,
+  Switch,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
-import { Camera, X, ChevronDown } from "lucide-react-native";
+import { Camera, X, ChevronDown, Scissors } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
 import { CLOTHING_CATEGORIES } from "@/constants/categories";
+import { removeBackground } from "@/utils/backgroundRemoval";
 
 export default function AddItemScreen() {
   const router = useRouter();
@@ -30,6 +32,12 @@ export default function AddItemScreen() {
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingName, setIsGeneratingName] = useState(false);
+  const [removeBackgroundEnabled, setRemoveBackgroundEnabled] = useState(true);
+  const [isProcessingBackground, setIsProcessingBackground] = useState(false);
+  const [originalImageUri, setOriginalImageUri] = useState<string | null>(null);
+  const [removeBackgroundEnabled, setRemoveBackgroundEnabled] = useState(true);
+  const [isProcessingBackground, setIsProcessingBackground] = useState(false);
+  const [originalImageUri, setOriginalImageUri] = useState<string | null>(null);
 
   // Filter out categories that shouldn't be selectable for adding items
   const selectableCategories = CLOTHING_CATEGORIES.filter(
@@ -54,7 +62,14 @@ export default function AddItemScreen() {
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      setOriginalImageUri(uri);
+      
+      if (removeBackgroundEnabled) {
+        await processImageWithBackgroundRemoval(uri);
+      } else {
+        setImageUri(uri);
+      }
     }
   };
 
@@ -74,7 +89,57 @@ export default function AddItemScreen() {
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      setOriginalImageUri(uri);
+      
+      if (removeBackgroundEnabled) {
+        await processImageWithBackgroundRemoval(uri);
+      } else {
+        setImageUri(uri);
+      }
+    }
+  };
+
+  const processImageWithBackgroundRemoval = async (uri: string) => {
+    setIsProcessingBackground(true);
+    
+    try {
+      const result = await removeBackground(uri);
+      
+      if (result.success && result.processedImageUri) {
+        setImageUri(result.processedImageUri);
+      } else {
+        // Fallback to original image if background removal fails
+        console.warn('Background removal failed:', result.error);
+        Alert.alert(
+          "Background Removal Failed", 
+          "Using original image. You can try again or disable background removal.",
+          [{ text: "OK" }]
+        );
+        setImageUri(uri);
+      }
+    } catch (error) {
+      console.error('Background removal error:', error);
+      Alert.alert(
+        "Background Removal Error", 
+        "Using original image. You can try again or disable background removal.",
+        [{ text: "OK" }]
+      );
+      setImageUri(uri);
+    } finally {
+      setIsProcessingBackground(false);
+    }
+  };
+
+  const handleRetryBackgroundRemoval = async () => {
+    if (originalImageUri) {
+      await processImageWithBackgroundRemoval(originalImageUri);
+    }
+  };
+
+  const handleUseOriginalImage = () => {
+    if (originalImageUri) {
+      setImageUri(originalImageUri);
     }
   };
 
@@ -209,11 +274,33 @@ export default function AddItemScreen() {
         </Pressable>
 
         <Text style={styles.label}>IMAGE</Text>
+        <View style={styles.backgroundRemovalToggle}>
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleInfo}>
+              <Text style={styles.toggleLabel}>AUTO BACKGROUND REMOVAL</Text>
+              <Text style={styles.toggleDescription}>
+                AI will automatically remove the background from your photos
+              </Text>
+            </View>
+            <Switch
+              value={removeBackgroundEnabled}
+              onValueChange={setRemoveBackgroundEnabled}
+              trackColor={{ false: Colors.lightGray, true: Colors.primary }}
+              thumbColor={removeBackgroundEnabled ? "white" : Colors.darkGray}
+            />
+          </View>
+        </View>
         <Text style={styles.localInfo}>
           Images are stored locally on your device. Only your preferences and outfit data are synced to the cloud.
         </Text>
         {imageUri ? (
           <View style={styles.imagePreviewContainer}>
+            {isProcessingBackground && (
+              <View style={styles.processingOverlay}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={styles.processingText}>REMOVING BACKGROUND...</Text>
+              </View>
+            )}
             <Image
               source={{ uri: imageUri }}
               style={styles.imagePreview}
@@ -221,10 +308,24 @@ export default function AddItemScreen() {
             />
             <Pressable
               style={styles.removeImageButton}
-              onPress={() => setImageUri(null)}
+              onPress={() => {
+                setImageUri(null);
+                setOriginalImageUri(null);
+              }}
             >
               <X size={20} color={Colors.error} />
             </Pressable>
+            {originalImageUri && originalImageUri !== imageUri && (
+              <View style={styles.imageActions}>
+                <Pressable style={styles.imageActionButton} onPress={handleRetryBackgroundRemoval}>
+                  <Scissors size={16} color={Colors.primary} />
+                  <Text style={styles.imageActionText}>RETRY REMOVAL</Text>
+                </Pressable>
+                <Pressable style={styles.imageActionButton} onPress={handleUseOriginalImage}>
+                  <Text style={styles.imageActionText}>USE ORIGINAL</Text>
+                </Pressable>
+              </View>
+            )}
           </View>
         ) : (
           <View style={styles.imagePickerContainer}>
@@ -243,13 +344,16 @@ export default function AddItemScreen() {
         <Pressable
           style={[styles.button, styles.saveButton, !canSave && styles.disabledButton]}
           onPress={handleSave}
-          disabled={!canSave || isLoading}
+          disabled={!canSave || isLoading || isProcessingBackground}
         >
-          {isLoading ? (
+          {isLoading || isProcessingBackground ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator color="white" />
               {isGeneratingName && (
                 <Text style={styles.loadingText}>GENERATING NAME...</Text>
+              )}
+              {isProcessingBackground && (
+                <Text style={styles.loadingText}>PROCESSING IMAGE...</Text>
               )}
             </View>
           ) : (
@@ -477,5 +581,71 @@ const styles = StyleSheet.create({
   },
   selectedCategoryOptionText: {
     color: "white",
+  },
+  backgroundRemovalToggle: {
+    backgroundColor: Colors.lightGray,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  toggleInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  toggleLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  toggleDescription: {
+    fontSize: 12,
+    color: Colors.darkGray,
+    lineHeight: 16,
+  },
+  processingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+    zIndex: 1,
+    gap: 8,
+  },
+  processingText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.primary,
+  },
+  imageActions: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+    marginTop: 8,
+  },
+  imageActionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.background,
+  },
+  imageActionText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: Colors.primary,
   },
 });

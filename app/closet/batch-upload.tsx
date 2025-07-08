@@ -8,23 +8,27 @@ import {
   ActivityIndicator,
   Alert,
   TextInput,
+  Switch,
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
-import { Upload, X, Check, Edit3, Trash2, AlertTriangle } from "lucide-react-native";
+import { Upload, X, Check, Edit3, Trash2, AlertTriangle, Scissors } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useClosetStore } from "@/stores/closetStore";
 import { CLOTHING_CATEGORIES } from "@/constants/categories";
+import { removeBackgroundBatch } from "@/utils/backgroundRemoval";
 
 interface BatchItem {
   id: string;
   imageUri: string;
+  originalImageUri?: string;
   name: string;
   categoryId: string;
   isProcessing: boolean;
   isEditing: boolean;
   aiProcessingFailed: boolean;
+  backgroundRemovalFailed?: boolean;
 }
 
 export default function BatchUploadScreen() {
@@ -33,6 +37,8 @@ export default function BatchUploadScreen() {
   const [items, setItems] = useState<BatchItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [removeBackgroundEnabled, setRemoveBackgroundEnabled] = useState(true);
+  const [backgroundProcessingProgress, setBackgroundProcessingProgress] = useState({ completed: 0, total: 0 });
 
   const selectableCategories = CLOTHING_CATEGORIES.filter(
     (c) => !["all"].includes(c.id)
@@ -57,15 +63,56 @@ export default function BatchUploadScreen() {
       const newItems: BatchItem[] = result.assets.map((asset, index) => ({
         id: `batch_${Date.now()}_${index}`,
         imageUri: asset.uri,
+        originalImageUri: asset.uri,
         name: "",
         categoryId: "shirts", // Default category
         isProcessing: true,
         isEditing: false,
         aiProcessingFailed: false,
+        backgroundRemovalFailed: false,
       }));
 
       setItems(newItems);
+      
+      if (removeBackgroundEnabled) {
+        await processBackgroundRemoval(newItems);
+      }
+      
       processImagesWithAI(newItems);
+    }
+  };
+
+  const processBackgroundRemoval = async (itemsToProcess: BatchItem[]) => {
+    const imageUris = itemsToProcess.map(item => item.originalImageUri || item.imageUri);
+    
+    try {
+      const results = await removeBackgroundBatch(
+        imageUris,
+        (completed, total) => {
+          setBackgroundProcessingProgress({ completed, total });
+        }
+      );
+      
+      // Update items with processed images
+      setItems(prevItems => 
+        prevItems.map((item, index) => {
+          const result = results[index];
+          return {
+            ...item,
+            imageUri: result.success && result.processedImageUri ? result.processedImageUri : item.imageUri,
+            backgroundRemovalFailed: !result.success
+          };
+        })
+      );
+      
+    } catch (error) {
+      console.error('Batch background removal failed:', error);
+      // Mark all items as having failed background removal
+      setItems(prevItems => 
+        prevItems.map(item => ({ ...item, backgroundRemovalFailed: true }))
+      );
+    } finally {
+      setBackgroundProcessingProgress({ completed: 0, total: 0 });
     }
   };
 
@@ -397,6 +444,23 @@ If you cannot clearly identify the clothing item or are unsure, respond with:
             <Text style={styles.emptyDescription}>
               Select multiple images from your photo library. AI will automatically categorize and name each item for you.
             </Text>
+            
+            <View style={styles.backgroundRemovalToggle}>
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleInfo}>
+                  <Text style={styles.toggleLabel}>AUTO BACKGROUND REMOVAL</Text>
+                  <Text style={styles.toggleDescription}>
+                    AI will remove backgrounds from all uploaded images
+                  </Text>
+                </View>
+                <Switch
+                  value={removeBackgroundEnabled}
+                  onValueChange={setRemoveBackgroundEnabled}
+                  trackColor={{ false: Colors.lightGray, true: Colors.primary }}
+                  thumbColor={removeBackgroundEnabled ? "white" : Colors.darkGray}
+                />
+              </View>
+            </View>
             <Pressable style={styles.selectButton} onPress={handleSelectImages}>
               <Text style={styles.selectButtonText}>SELECT IMAGES</Text>
             </Pressable>
@@ -405,12 +469,14 @@ If you cannot clearly identify the clothing item or are unsure, respond with:
           <>
             <View style={styles.statusBar}>
               <Text style={styles.statusText}>
-                {processingCount > 0 
-                  ? `Processing ${processingCount} items...`
-                  : `${readyCount} ready${failedCount > 0 ? `, ${failedCount} need manual input` : ''}`
+                {backgroundProcessingProgress.total > 0
+                  ? `Removing backgrounds... ${backgroundProcessingProgress.completed}/${backgroundProcessingProgress.total}`
+                  : processingCount > 0 
+                    ? `Processing ${processingCount} items...`
+                    : `${readyCount} ready${failedCount > 0 ? `, ${failedCount} need manual input` : ''}`
                 }
               </Text>
-              {processingCount === 0 && (
+              {processingCount === 0 && backgroundProcessingProgress.total === 0 && (
                 <Pressable style={styles.addMoreButton} onPress={handleSelectImages}>
                   <Text style={styles.addMoreText}>ADD MORE</Text>
                 </Pressable>
@@ -448,10 +514,10 @@ If you cannot clearly identify the clothing item or are unsure, respond with:
           <Pressable
             style={[
               styles.saveAllButton,
-              (processingCount > 0 || isSaving || failedCount > 0) && styles.disabledButton
+              (processingCount > 0 || isSaving || failedCount > 0 || backgroundProcessingProgress.total > 0) && styles.disabledButton
             ]}
             onPress={handleSaveAll}
-            disabled={processingCount > 0 || isSaving || failedCount > 0}
+            disabled={processingCount > 0 || isSaving || failedCount > 0 || backgroundProcessingProgress.total > 0}
           >
             {isSaving ? (
               <ActivityIndicator color="white" />
