@@ -228,7 +228,8 @@ export async function generateOutfit(
 export async function generateAIOutfit(
   items: ClothingItem[],
   enabledCategories: Record<string, boolean>,
-  outfitHistory: Outfit[] = []
+  outfitHistory: Outfit[] = [],
+  theme: string = ""
 ): Promise<Record<string, ClothingItem | null>> {
   try {
     // Filter items by enabled categories
@@ -271,8 +272,28 @@ export async function generateAIOutfit(
       return `Recent outfit ${index + 1}: ${usedItems.join(', ')}`;
     }).join('\n');
 
-    // Prepare the AI prompt
-    const prompt = `You are a world-class fashion stylist with expertise in color theory, style coordination, and current fashion trends. Your goal is to create visually stunning, well-coordinated outfits that are both stylish and practical.
+    // Prepare the AI prompt with theme support
+    const themeInstruction = theme ? `
+
+THEME REQUIREMENT: The user has requested a "${theme}" themed outfit. This is your PRIMARY directive - create an outfit that strongly embodies this theme while maintaining good fashion sense. Consider:
+- Colors associated with this theme
+- Styles and aesthetics that match this theme
+- Cultural or subcultural elements of this theme
+- How to interpret this theme in a fashionable, wearable way
+- Balance theme authenticity with good styling principles
+
+EXAMPLES of theme interpretation:
+- "cowboy": Western wear, earth tones, denim, boots, hats, rustic elements
+- "pink": Various shades of pink, feminine touches, soft colors, romantic elements
+- "red": Bold red pieces, power colors, confident styling, dramatic elements
+- "emo": Dark colors, alternative styling, layering, edgy accessories
+- "streetwear": Urban casual, sneakers, hoodies, contemporary brands, relaxed fit
+- "preppy": Clean lines, classic colors, polished look, traditional elements
+- "bohemian": Flowing fabrics, earth tones, layered accessories, free-spirited vibe
+
+IMPORTANT: The theme should guide your selections but don't sacrifice outfit coherence. If the available items don't perfectly match the theme, choose the closest options that still create a cohesive look.` : '';
+
+    const prompt = `You are a world-class fashion stylist with expertise in color theory, style coordination, and current fashion trends. Your goal is to create visually stunning, well-coordinated outfits that are both stylish and practical.${themeInstruction}
 
 Available clothing items:
 ${JSON.stringify(itemDescriptions, null, 2)}
@@ -330,7 +351,9 @@ Fashion guidelines to follow:
 
 6. CURRENT TRENDS: Incorporate modern fashion sensibilities while maintaining timeless appeal
 
-IMPORTANT: Put real thought into each selection. Avoid random combinations. Each outfit should tell a cohesive style story and be something someone would genuinely want to wear and feel confident in. PRIORITIZE creating variety by using different items than those recently worn.
+IMPORTANT: Put real thought into each selection. Avoid random combinations. Each outfit should tell a cohesive style story and be something someone would genuinely want to wear and feel confident in. PRIORITIZE creating variety by using different items than those recently worn.${theme ? `
+
+THEME FOCUS: Remember that the user specifically requested a "${theme}" themed outfit. This should be your primary consideration when making selections, while still maintaining good fashion principles.` : ''}
 
 CATEGORY VALIDATION: Before selecting any item, verify that the item's "category" field exactly matches the category slot you're placing it in. This is absolutely critical for proper outfit display.
 

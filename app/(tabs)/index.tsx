@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, Pressable, ActivityIndicator } from "react-native";
+import { StyleSheet, View, Text, Pressable, ActivityIndicator, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 import { Shuffle } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
@@ -17,6 +17,7 @@ export default function HomeScreen() {
   const { enabledCategories } = useSettingsStore();
   const [currentOutfit, setCurrentOutfit] = useState<Record<string, ClothingItem | null>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const [theme, setTheme] = useState("");
 
   const handleGenerateOutfit = async () => {
     if (Platform.OS !== "web") {
@@ -25,8 +26,8 @@ export default function HomeScreen() {
     
     setIsGenerating(true);
     try {
-      // Pass outfit history to ensure variety
-      const outfit = await generateAIOutfit(items, enabledCategories, outfitHistory);
+      // Pass outfit history and theme to ensure variety
+      const outfit = await generateAIOutfit(items, enabledCategories, outfitHistory, theme.trim());
       setCurrentOutfit(outfit);
       
       // Add to history automatically when outfit is generated
@@ -80,11 +81,24 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         ) : (
-          <OutfitGrid
-            outfit={currentOutfit}
-            onItemPress={handleItemPress}
-            enabledCategories={enabledCategories}
-          />
+          <>
+            <View style={styles.themeContainer}>
+              <TextInput
+                style={styles.themeInput}
+                placeholder="type theme here"
+                placeholderTextColor={Colors.darkGray}
+                value={theme}
+                onChangeText={setTheme}
+                returnKeyType="done"
+                blurOnSubmit
+              />
+            </View>
+            <OutfitGrid
+              outfit={currentOutfit}
+              onItemPress={handleItemPress}
+              enabledCategories={enabledCategories}
+            />
+          </>
         )}
       </View>
 
@@ -195,5 +209,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     textAlign: "center",
+  },
+  themeContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+  },
+  themeInput: {
+    backgroundColor: Colors.lightGray,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
 });
