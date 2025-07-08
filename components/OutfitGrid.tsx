@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 import { ClothingItem as ClothingItemType } from "@/types/clothing";
 import { CLOTHING_CATEGORIES } from "@/constants/categories";
+import { useClosetStore } from "@/stores/closetStore";
 import ClothingItem from "./ClothingItem";
 import EmptyClothingItem from "./EmptyClothingItem";
 
@@ -16,6 +17,16 @@ export default function OutfitGrid({
   onItemPress,
   enabledCategories,
 }: Props) {
+  const { pinItem, unpinItem, pinnedItems } = useClosetStore();
+
+  const handlePinToggle = (categoryId: string, itemId: string) => {
+    const isPinned = pinnedItems[categoryId] === itemId;
+    if (isPinned) {
+      unpinItem(categoryId);
+    } else {
+      pinItem(categoryId, itemId);
+    }
+  };
   // Create a symmetric grid layout matching the image
   // Position mapping:
   // 0: empty, 1: hat, 2: empty
@@ -48,6 +59,9 @@ export default function OutfitGrid({
             item={cell.item}
             size="medium"
             onPress={() => onItemPress?.(cell.categoryId)}
+            showPinButton={true}
+            isPinned={pinnedItems[cell.categoryId] === cell.item.id}
+            onPin={() => handlePinToggle(cell.categoryId, cell.item.id)}
           />
         ) : (
           <EmptyClothingItem

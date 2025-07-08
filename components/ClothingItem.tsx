@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, View, Text, Pressable } from "react-native";
-import { X } from "lucide-react-native";
+import { X, Pin } from "lucide-react-native";
 import { Image } from "expo-image";
 import Colors from "@/constants/colors";
 import { ClothingItem as ClothingItemType } from "@/types/clothing";
@@ -10,16 +10,22 @@ type Props = {
   item: ClothingItemType;
   onPress?: () => void;
   onRemove?: () => void;
+  onPin?: () => void;
   size?: "small" | "medium" | "large";
   showRemoveButton?: boolean;
+  showPinButton?: boolean;
+  isPinned?: boolean;
 };
 
 export default function ClothingItem({
   item,
   onPress,
   onRemove,
+  onPin,
   size = "medium",
   showRemoveButton = false,
+  showPinButton = false,
+  isPinned = false,
 }: Props) {
   const sizeStyles = {
     small: { width: 70, height: 70 },
@@ -56,6 +62,18 @@ export default function ClothingItem({
           }}
         >
           <X size={16} color={Colors.error} />
+        </Pressable>
+      )}
+      
+      {showPinButton && onPin && (
+        <Pressable
+          style={[styles.pinButton, isPinned && styles.pinnedButton]}
+          onPress={(e) => {
+            e.stopPropagation();
+            onPin();
+          }}
+        >
+          <Pin size={14} color={isPinned ? "white" : Colors.primary} />
         </Pressable>
       )}
     </Pressable>
@@ -116,5 +134,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
+  },
+  pinButton: {
+    position: "absolute",
+    top: 6,
+    left: 6,
+    backgroundColor: "white",
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  pinnedButton: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
 });

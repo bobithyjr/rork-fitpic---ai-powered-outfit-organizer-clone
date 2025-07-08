@@ -10,7 +10,7 @@ import { CLOSET_CATEGORIES } from "@/constants/categories";
 export default function CategoryScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { items, removeItem } = useClosetStore();
+  const { items, removeItem, pinItem, unpinItem, pinnedItems } = useClosetStore();
 
   const category = CLOSET_CATEGORIES.find((c) => c.id === id);
   
@@ -41,6 +41,15 @@ export default function CategoryScreen() {
     removeItem(itemId);
   };
 
+  const handlePinToggle = (itemId: string) => {
+    const isPinned = pinnedItems[id!] === itemId;
+    if (isPinned) {
+      unpinItem(id!);
+    } else {
+      pinItem(id!, itemId);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Stack.Screen
@@ -55,7 +64,10 @@ export default function CategoryScreen() {
           <ClothingItem
             item={item}
             showRemoveButton
+            showPinButton
+            isPinned={pinnedItems[id!] === item.id}
             onRemove={() => handleRemoveItem(item.id)}
+            onPin={() => handlePinToggle(item.id)}
           />
         )}
         keyExtractor={(item) => item.id}

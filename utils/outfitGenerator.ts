@@ -78,7 +78,8 @@ const validateItemCategorization = (items: ClothingItem[]) => {
 export async function generateOutfit(
   items: ClothingItem[],
   enabledCategories: Record<string, boolean>,
-  outfitHistory: Outfit[] = []
+  outfitHistory: Outfit[] = [],
+  pinnedItems: Record<string, string> = {}
 ): Promise<Record<string, ClothingItem | null>> {
   // Debug: Validate item categorization
   validateItemCategorization(items);
@@ -116,6 +117,16 @@ export async function generateOutfit(
       // Skip if category is disabled
       if (!enabledCategories[category.id]) {
         return;
+      }
+
+      // Check if this category has a pinned item
+      const pinnedItemId = pinnedItems[category.id];
+      if (pinnedItemId) {
+        const pinnedItem = items.find(item => item.id === pinnedItemId);
+        if (pinnedItem && pinnedItem.categoryId === category.id) {
+          outfit[category.id] = pinnedItem;
+          return; // Skip random selection for this category
+        }
       }
 
       const categoryItems = itemsByCategory[category.id] || [];
@@ -192,6 +203,16 @@ export async function generateOutfit(
       return;
     }
 
+    // Check if this category has a pinned item
+    const pinnedItemId = pinnedItems[category.id];
+    if (pinnedItemId) {
+      const pinnedItem = items.find(item => item.id === pinnedItemId);
+      if (pinnedItem && pinnedItem.categoryId === category.id) {
+        outfit[category.id] = pinnedItem;
+        return; // Skip random selection for this category
+      }
+    }
+
     const categoryItems = itemsByCategory[category.id] || [];
     const isRequired = !category.optional;
     const shouldPickItem = isRequired || Math.random() < 0.7;
@@ -229,7 +250,8 @@ export async function generateAIOutfit(
   items: ClothingItem[],
   enabledCategories: Record<string, boolean>,
   outfitHistory: Outfit[] = [],
-  theme: string = ""
+  theme: string = "",
+  pinnedItems: Record<string, string> = {}
 ): Promise<Record<string, ClothingItem | null>> {
   try {
     // Filter items by enabled categories
@@ -239,7 +261,7 @@ export async function generateAIOutfit(
 
     // If we have fewer than 3 items, fall back to simple random selection
     if (availableItems.length < 3) {
-      return await generateOutfit(items, enabledCategories, outfitHistory);
+      return await generateOutfit(items, enabledCategories, outfitHistory, pinnedItems);
     }
 
     // Get recently used items to provide context to AI
@@ -261,8 +283,18 @@ export async function generateAIOutfit(
       name: item.name,
       category: item.categoryId,
       tags: item.tags || [],
-      recentlyUsed: recentlyUsed.has(item.id)
+      recentlyUsed: recentlyUsed.has(item.id),
+      pinned: Object.values(pinnedItems).includes(item.id)
     }));
+
+    // Create pinned items context
+    const pinnedItemsContext = Object.entries(pinnedItems)
+      .map(([categoryId, itemId]) => {
+        const item = availableItems.find(i => i.id === itemId);
+        return item ? `${categoryId}: ${item.name} (PINNED - MUST USE)` : null;
+      })
+      .filter(Boolean)
+      .join('\n');
 
     // Create context about recent outfits for variety
     const recentOutfitContext = outfitHistory.slice(0, 3).map((outfit, index) => {
@@ -298,7 +330,10 @@ IMPORTANT: The theme should guide your selections but don't sacrifice outfit coh
 Available clothing items:
 ${JSON.stringify(itemDescriptions, null, 2)}
 
-${recentOutfitContext ? `Recent outfit history (AVOID creating similar combinations):
+${pinnedItemsContext ? `PINNED ITEMS (MUST INCLUDE THESE EXACT ITEMS):
+${pinnedItemsContext}
+
+` : ''}${recentOutfitContext ? `Recent outfit history (AVOID creating similar combinations):
 ${recentOutfitContext}` : ''}
 
 Available categories and their requirements:
@@ -310,12 +345,14 @@ Available categories and their requirements:
 - jackets: OPTIONAL (add for layering or style) - ONLY select items with category "jackets"
 - accessories: OPTIONAL (add for personality and flair) - ONLY select items with category "accessories"
 
-CRITICAL RULE: You MUST only select items for their correct category. For example:
-- NEVER put jeans (pants category) in the belts section
-- NEVER put shoes in the coats/jackets section  
-- NEVER put shirts in the pants section
-- Each item can ONLY go in its designated category slot
-- If an item's category doesn't match the slot, DO NOT select it
+CRITICAL RULES:
+1. PINNED ITEMS: You MUST include any items marked as "pinned: true" in their designated categories. These are user-selected items that MUST appear in the final outfit.
+2. CATEGORY MATCHING: You MUST only select items for their correct category. For example:
+   - NEVER put jeans (pants category) in the belts section
+   - NEVER put shoes in the coats/jackets section  
+   - NEVER put shirts in the pants section
+   - Each item can ONLY go in its designated category slot
+   - If an item's category doesn't match the slot, DO NOT select it
 
 Fashion guidelines to follow:
 1. COLOR HARMONY: Create pleasing color combinations using:
@@ -418,7 +455,7 @@ Only include item IDs that exist in the provided list. Use null for categories w
         }
       } catch (parseError) {
         console.log('Failed to parse AI response, falling back to random selection');
-        return await generateOutfit(items, enabledCategories, outfitHistory);
+        return await generateOutfit(items, enabledCategories, outfitHistory, pinnedItems);
       }
 
       // Convert AI selection to our outfit format with strict category validation

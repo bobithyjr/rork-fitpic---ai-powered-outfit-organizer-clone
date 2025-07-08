@@ -13,7 +13,7 @@ import { ClothingItem } from "@/types/clothing";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { items, saveOutfit, addToHistory, outfitHistory } = useClosetStore();
+  const { items, saveOutfit, addToHistory, outfitHistory, pinnedItems, getPinnedItem } = useClosetStore();
   const { enabledCategories } = useSettingsStore();
   const [currentOutfit, setCurrentOutfit] = useState<Record<string, ClothingItem | null>>({});
   const [isGenerating, setIsGenerating] = useState(false);
@@ -26,8 +26,8 @@ export default function HomeScreen() {
     
     setIsGenerating(true);
     try {
-      // Pass outfit history and theme to ensure variety
-      const outfit = await generateAIOutfit(items, enabledCategories, outfitHistory, theme.trim());
+      // Pass outfit history, theme, and pinned items to ensure variety
+      const outfit = await generateAIOutfit(items, enabledCategories, outfitHistory, theme.trim(), pinnedItems);
       setCurrentOutfit(outfit);
       
       // Add to history automatically when outfit is generated
@@ -92,6 +92,11 @@ export default function HomeScreen() {
                 returnKeyType="done"
                 blurOnSubmit
               />
+              {Object.keys(pinnedItems).length > 0 && (
+                <Text style={styles.pinnedInfo}>
+                  📌 {Object.keys(pinnedItems).length} item{Object.keys(pinnedItems).length > 1 ? 's' : ''} pinned
+                </Text>
+              )}
             </View>
             <OutfitGrid
               outfit={currentOutfit}
@@ -243,5 +248,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     width: "100%",
     maxWidth: 280,
+  },
+  pinnedInfo: {
+    fontSize: 12,
+    color: Colors.primary,
+    textAlign: "center",
+    marginTop: 8,
+    fontWeight: "500",
   },
 });

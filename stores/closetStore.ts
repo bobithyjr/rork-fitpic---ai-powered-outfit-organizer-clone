@@ -9,6 +9,7 @@ interface ClosetState {
   items: ClothingItem[];
   savedOutfits: Outfit[];
   outfitHistory: Outfit[];
+  pinnedItems: Record<string, string>; // categoryId -> itemId mapping
   isLoading: boolean;
   lastSyncTime: number | null;
   addItem: (item: Omit<ClothingItem, "id" | "createdAt">) => void;
@@ -19,6 +20,9 @@ interface ClosetState {
   removeSavedOutfit: (id: string) => void;
   renameOutfit: (id: string, name: string) => void;
   clearHistory: () => void;
+  pinItem: (categoryId: string, itemId: string) => void;
+  unpinItem: (categoryId: string) => void;
+  getPinnedItem: (categoryId: string) => ClothingItem | null;
   syncToCloud: () => Promise<void>;
   loadFromCloud: () => Promise<void>;
   autoLoadFromCloud: () => Promise<void>;
@@ -31,6 +35,7 @@ export const useClosetStore = create<ClosetState>()(
       items: [],
       savedOutfits: [],
       outfitHistory: [],
+      pinnedItems: {},
       isLoading: false,
       lastSyncTime: null,
       
@@ -116,6 +121,34 @@ export const useClosetStore = create<ClosetState>()(
         get().syncToCloud();
       },
       
+      pinItem: (categoryId, itemId) => {
+        set((state) => ({
+          pinnedItems: {
+            ...state.pinnedItems,
+            [categoryId]: itemId,
+          },
+        }));
+        // Sync after pinning item
+        setTimeout(() => get().syncToCloud(), 100);
+      },
+      
+      unpinItem: (categoryId) => {
+        set((state) => {
+          const newPinnedItems = { ...state.pinnedItems };
+          delete newPinnedItems[categoryId];
+          return { pinnedItems: newPinnedItems };
+        });
+        // Sync after unpinning item
+        setTimeout(() => get().syncToCloud(), 100);
+      },
+      
+      getPinnedItem: (categoryId) => {
+        const state = get();
+        const pinnedItemId = state.pinnedItems[categoryId];
+        if (!pinnedItemId) return null;
+        return state.items.find(item => item.id === pinnedItemId) || null;
+      },
+      
       syncToCloud: async () => {
         const userStore = useUserStore.getState();
         if (!userStore.isCloudSyncEnabled || !userStore.userId) {
@@ -132,6 +165,7 @@ export const useClosetStore = create<ClosetState>()(
               items: state.items,
               savedOutfits: state.savedOutfits,
               outfitHistory: state.outfitHistory,
+              pinnedItems: state.pinnedItems,
             },
           });
           
@@ -163,6 +197,7 @@ export const useClosetStore = create<ClosetState>()(
               items: cloudData.items || [],
               savedOutfits: cloudData.savedOutfits || [],
               outfitHistory: cloudData.outfitHistory || [],
+              pinnedItems: cloudData.pinnedItems || {},
               lastSyncTime: cloudData.lastUpdated,
             });
             userStore.setLastSyncTime(cloudData.lastUpdated);
@@ -228,6 +263,7 @@ export const useClosetStore = create<ClosetState>()(
                 items: cloudData.items || [],
                 savedOutfits: cloudData.savedOutfits || [],
                 outfitHistory: cloudData.outfitHistory || [],
+                pinnedItems: cloudData.pinnedItems || {},
                 lastSyncTime: cloudData.lastUpdated,
               });
               userStore.setLastSyncTime(cloudData.lastUpdated);

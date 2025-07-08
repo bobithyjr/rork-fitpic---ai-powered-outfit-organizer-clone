@@ -21,6 +21,7 @@ const ClosetDataSchema = z.object({
   items: z.array(ClothingItemSchema),
   savedOutfits: z.array(OutfitSchema),
   outfitHistory: z.array(OutfitSchema),
+  pinnedItems: z.record(z.string()).optional(),
 });
 
 // In-memory storage for demo (in production, use a real database)
@@ -61,6 +62,7 @@ export const getClosetProcedure = publicProcedure
         items: [],
         savedOutfits: [],
         outfitHistory: [],
+        pinnedItems: {},
         lastUpdated: null,
       };
     }
