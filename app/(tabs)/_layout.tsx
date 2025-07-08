@@ -12,18 +12,25 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: Colors.background,
           borderTopColor: Colors.lightGray,
+          borderTopWidth: 1,
           paddingTop: 8,
+          paddingBottom: 8,
+          height: 84,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: "600",
           textTransform: "uppercase",
+          marginTop: 4,
         },
         headerStyle: {
           backgroundColor: Colors.background,
+          borderBottomColor: Colors.lightGray,
+          borderBottomWidth: 1,
         },
         headerTitleStyle: {
           fontWeight: "600",
+          fontSize: 18,
         },
       }}
     >
