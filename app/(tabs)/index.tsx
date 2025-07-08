@@ -146,7 +146,8 @@ const styles = StyleSheet.create({
   outfitContainer: {
     flex: 1,
     justifyContent: "center",
-    paddingTop: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   emptyState: {
     padding: 32,
@@ -178,12 +179,12 @@ const styles = StyleSheet.create({
   actionContainer: {
     paddingHorizontal: 24,
     paddingBottom: 24,
-    paddingTop: 16,
-    gap: 16,
+    paddingTop: 12,
+    gap: 14,
   },
   generateButton: {
     backgroundColor: Colors.primary,
-    paddingVertical: 18,
+    paddingVertical: 16,
     borderRadius: 14,
     flexDirection: "row",
     justifyContent: "center",
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
   },
   generateButtonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "600",
   },
   disabledButton: {
@@ -211,7 +212,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
@@ -226,21 +227,21 @@ const styles = StyleSheet.create({
   },
   themeContainer: {
     paddingHorizontal: 24,
-    paddingBottom: 20,
-    paddingTop: 16,
+    paddingBottom: 16,
+    paddingTop: 12,
     alignItems: "center",
   },
   themeInput: {
     backgroundColor: Colors.lightGray,
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
+    paddingVertical: 12,
+    fontSize: 15,
     color: Colors.text,
     borderWidth: 1,
     borderColor: Colors.border,
     textAlign: "center",
     width: "100%",
-    maxWidth: 300,
+    maxWidth: 280,
   },
 });

@@ -15,8 +15,8 @@ export default function EmptyClothingItem({
   size = "medium",
 }: Props) {
   const sizeStyles = {
-    small: { width: 80, height: 80 },
-    medium: { width: 100, height: 100 },
+    small: { width: 70, height: 70 },
+    medium: { width: 85, height: 85 },
     large: { width: 150, height: 150 },
   };
 
@@ -46,11 +46,11 @@ const styles = StyleSheet.create({
   content: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 12,
+    padding: 8,
   },
   text: {
     color: Colors.darkGray,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "500",
     textAlign: "center",
     opacity: 0.8,

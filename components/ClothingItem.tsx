@@ -22,8 +22,8 @@ export default function ClothingItem({
   showRemoveButton = false,
 }: Props) {
   const sizeStyles = {
-    small: { width: 80, height: 80 },
-    medium: { width: 100, height: 100 },
+    small: { width: 70, height: 70 },
+    medium: { width: 85, height: 85 },
     large: { width: 150, height: 150 },
   };
 
@@ -87,19 +87,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: "rgba(0,0,0,0.75)",
-    padding: 6,
+    padding: 4,
   },
   name: {
     color: "white",
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "600",
     textAlign: "center",
   },
   category: {
     color: "rgba(255,255,255,0.85)",
-    fontSize: 9,
+    fontSize: 8,
     textAlign: "center",
-    marginTop: 2,
+    marginTop: 1,
   },
   removeButton: {
     position: "absolute",
